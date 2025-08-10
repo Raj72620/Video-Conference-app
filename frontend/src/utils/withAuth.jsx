@@ -1,27 +1,24 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom"
+import React, { useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 
-const withAuth = (WrappedComponent ) => {
-    const AuthComponent = (props) => {
-        const router = useNavigate();
+const withAuth = (WrappedComponent) => {
+  const AuthComponent = (props) => {
+    const router = useNavigate();
 
-        const isAuthenticated = () => {
-            if(localStorage.getItem("token")) {
-                return true;
-            } 
-            return false;
-        }
+    const isAuthenticated = useCallback(() => {
+      return !!localStorage.getItem("token");
+    }, []);
 
-        useEffect(() => {
-            if(!isAuthenticated()) {
-                router("/auth")
-            }
-        }, [])
+    useEffect(() => {
+      if (!isAuthenticated()) {
+        router("/auth");
+      }
+    }, [isAuthenticated, router]);
 
-        return <WrappedComponent {...props} />
-    }
+    return <WrappedComponent {...props} />;
+  };
 
-    return AuthComponent;
-}
+  return AuthComponent;
+};
 
 export default withAuth;

@@ -39,27 +39,12 @@
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 ![Netlify](https://img.shields.io/badge/Netlify-00C7B7?style=for-the-badge&logo=netlify&logoColor=white)
 
----
-
-## 🎥 UI Preview
-
-<div align="center">
-  
-| | |
-|---|---|
-| ![Call Interface](https://via.placeholder.com/400x225/1e293b/ffffff?text=Call+Interface) | ![Controls](https://via.placeholder.com/400x225/1e293b/ffffff?text=Participant+Controls) |
-| **Modern Call Interface** | **Intuitive Control Panel** |
-
-</div>
-
----
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 - Node.js v16+
-- npm/yarn
-- Firebase account (for authentication)
+- npm
 
 ### Installation
 ```bash

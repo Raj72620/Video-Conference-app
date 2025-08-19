@@ -16,7 +16,8 @@ import {
   Home as HomeIcon,
   CalendarToday as DateIcon,
   Code as CodeIcon,
-  Videocam as MeetingIcon
+  Videocam as MeetingIcon,
+  Delete as DeleteIcon
 } from '@mui/icons-material';
 import { AuthContext } from '../contexts/AuthContext';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
@@ -50,10 +51,11 @@ const theme = createTheme({
 });
 
 export default function History() {
-  const { getHistoryOfUser } = useContext(AuthContext);
+  const { getHistoryOfUser, deleteMeeting } = useContext(AuthContext);
   const [meetings, setMeetings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [refresh, setRefresh] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -71,7 +73,7 @@ export default function History() {
     };
 
     fetchHistory();
-  }, [getHistoryOfUser]);
+  }, [getHistoryOfUser, refresh]);
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -86,6 +88,17 @@ export default function History() {
 
   const handleCardClick = (meetingCode) => {
     navigate(`/${meetingCode}`);
+  };
+
+  const handleDelete = async (meetingId, e) => {
+    e.stopPropagation();
+    try {
+      await deleteMeeting(meetingId);
+      setRefresh(prev => !prev); // Toggle refresh to trigger re-fetch
+    } catch (err) {
+      setError('Failed to delete meeting. Please try again.');
+      console.error(err);
+    }
   };
 
   return (
@@ -204,19 +217,37 @@ export default function History() {
                   </Typography>
                 </Box>
 
-                <Box sx={{ mt: 'auto', pt: 2 }}>
+                <Box sx={{ mt: 'auto', pt: 2, display: 'flex', justifyContent: 'space-between' }}>
                   <Chip 
                     label="View Meeting" 
                     color="primary" 
                     variant="outlined"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCardClick(meeting.meetingCode);
+                    }}
                     sx={{ 
-                      alignSelf: 'flex-end',
                       '&:hover': {
                         backgroundColor: 'primary.main',
                         color: 'white'
                       }
                     }}
                   />
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    size="small"
+                    startIcon={<DeleteIcon fontSize="small" />}
+                    onClick={(e) => handleDelete(meeting._id, e)}
+                    sx={{
+                      '&:hover': {
+                        backgroundColor: 'error.main',
+                        color: 'white'
+                      }
+                    }}
+                  >
+                    Delete
+                  </Button>
                 </Box>
               </Card>
             ))}

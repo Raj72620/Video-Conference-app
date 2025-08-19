@@ -91,9 +91,25 @@ const handleRegister = async (name, username, password) => {
     }
 
 
-    const data = {
-        userData, setUserData, addToUserHistory, getHistoryOfUser, handleRegister, handleLogin
+// Add this new function to the AuthProvider component
+const deleteMeeting = async (meetingId) => {
+    try {
+        await client.delete(`/delete_meeting/${meetingId}`, {
+            params: {
+                token: localStorage.getItem("token")
+            }
+        });
+        return true; // Indicate success
+    } catch (err) {
+        throw err;
     }
+}
+
+// Update the data object to include the new function
+const data = {
+    userData, setUserData, addToUserHistory, getHistoryOfUser, 
+    handleRegister, handleLogin, deleteMeeting
+}
 
     return (
         <AuthContext.Provider value={data}>

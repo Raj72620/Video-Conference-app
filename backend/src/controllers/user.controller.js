@@ -102,5 +102,32 @@ const addToHistory = async (req, res) => {
     }
 }
 
+// Add this new function at the bottom (before the export)
+const deleteHistory = async (req, res) => {
+    const { meetingId } = req.params;
+    const { token } = req.query; // Get token from query params
 
-export { login, register, getUserHistory, addToHistory }
+    try {
+        // Verify user owns the meeting
+        const user = await User.findOne({ token });
+        if (!user) {
+            return res.status(httpStatus.UNAUTHORIZED).json({ message: "Invalid token" });
+        }
+
+        const meeting = await Meeting.findOneAndDelete({ 
+            _id: meetingId, 
+            user_id: user.username 
+        });
+
+        if (!meeting) {
+            return res.status(httpStatus.NOT_FOUND).json({ message: "Meeting not found or not authorized" });
+        }
+
+        res.status(httpStatus.OK).json({ message: "Meeting deleted successfully" });
+    } catch (e) {
+        res.status(httpStatus.INTERNAL_SERVER_ERROR).json({ message: `Error: ${e}` });
+    }
+}
+
+// Update the export to include the new function
+export { login, register, getUserHistory, addToHistory, deleteHistory }

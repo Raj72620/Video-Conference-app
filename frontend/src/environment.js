@@ -1,10 +1,4 @@
-// TODO: Replace with your own production URL when ready
-// Currently using Apna College's backend for reference
-const server = "https://video-conference-app-53ks.onrender.com";
-export default server;
-    // "https://apnacollegebackend.onrender.com" :  
-    // Apna College's backend - replace with yours
-
-    // "http://localhost:8080" 
-     // Changed to 8080 to match your backend port
-
+// Should point to your local server during development
+export default process.env.NODE_ENV === 'production' 
+  ? 'https://video-conference-app-53ks.onrender.com'
+  : 'http://localhost:8080';

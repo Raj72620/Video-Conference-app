@@ -1,8 +1,7 @@
-
 import { Router } from "express";
 import { User } from "../models/user.model.js";
 import bcrypt from "bcrypt";
-import { addToHistory, getUserHistory, login, register } from "../controllers/user.controller.js";
+import { addToHistory, getUserHistory, login, register,deleteHistory } from "../controllers/user.controller.js";
 
 
 
@@ -57,5 +56,8 @@ router.post('/register', async (req, res) => {
 });
 router.route("/add_to_activity").post(addToHistory)
 router.route("/get_all_activity").get(getUserHistory)
+
+router.route("/delete_meeting/:meetingId").delete(deleteHistory)
+
 
 export default router;

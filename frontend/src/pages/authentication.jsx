@@ -132,7 +132,7 @@ let handleAuth = async () => {
                                     onClick={() => { setFormState(0); setError("") }}
                                     sx={{ flex: 1 }}
                                 >
-                                    Sign In
+                                    Login 
                                 </Button>
                                 <Button 
                                     variant={formState === 1 ? "contained" : "outlined"} 

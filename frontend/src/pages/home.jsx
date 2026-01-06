@@ -91,75 +91,30 @@ function HomeComponent() {
   const [openProfile, setOpenProfile] = useState(false);
   const [history, setHistory] = useState([]);
 
+  // Ensure user data is up to date from local storage
   useEffect(() => {
-    // Force refresh user data from localStorage when Home mounts
-    try {
+    const fetchUser = () => {
       const storedUser = localStorage.getItem("user");
       if (storedUser) {
-        const parsedUser = JSON.parse(storedUser);
-        console.log("Profile User Data:", parsedUser);
+        try {
+          const parsedUser = JSON.parse(storedUser);
+          // If the context userData is empty but we have it in local storage, you might want to force an update 
+          // deeper in the app structure, but for now, we'll ensure we use this for display if needed.
+          console.log("Loaded user:", parsedUser);
+        } catch (e) {
+          console.error("Invalid user data in storage");
+        }
       }
-    } catch (e) {
-      console.error("Error parsing user data", e);
-    }
+    };
+    fetchUser();
   }, []);
 
-  useEffect(() => {
-    if (openProfile) {
-      fetchHistory();
-    }
-  }, [openProfile]);
-
-  const fetchHistory = async () => {
-    try {
-      const data = await getHistoryOfUser();
-      setHistory(data);
-    } catch (err) {
-      console.error("Failed to fetch history", err);
-    }
-  };
-
-  const handleJoinVideoCall = async () => {
-    if (!meetingCode.trim()) return;
-    await addToUserHistory(meetingCode);
-    navigate(`/${meetingCode}`);
-  };
-
-  const handleCreateNewMeeting = () => {
-    const randomCode = Math.random().toString(36).substring(2, 8);
-    navigate(`/${randomCode}`);
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    navigate("/auth");
-  };
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const handleDeleteMeeting = async (meetingId) => {
-    try {
-      await deleteMeeting(meetingId);
-      fetchHistory(); // Refresh list
-    } catch (err) {
-      console.error(err);
-    }
-  }
+  // Use a derived state or memo for the display user to genericize fallback
+  const displayUser = userData || JSON.parse(localStorage.getItem("user") || '{}');
 
   return (
     <ThemeProvider theme={theme}>
       <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-        {/* Professional App Bar */}
         <AppBar position="static" elevation={0} sx={{
           backgroundColor: 'white',
           color: 'text.primary',
@@ -179,111 +134,134 @@ function HomeComponent() {
                   sx={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 1,
+                    gap: 1.5,
                     cursor: 'pointer',
-                    padding: '4px 12px',
-                    borderRadius: '20px',
-                    '&:hover': { backgroundColor: 'rgba(0,0,0,0.04)' }
+                    bgcolor: 'grey.100',
+                    padding: '8px 16px',
+                    borderRadius: '50px',
+                    transition: 'all 0.2s',
+                    '&:hover': { bgcolor: 'grey.200' }
                   }}
                   onClick={() => setOpenProfile(true)}
                 >
-                  <Typography variant="body1" sx={{ fontWeight: 500, display: { xs: 'none', sm: 'block' } }}>
-                    {userData?.name || "User"}
-                  </Typography>
-                  <Avatar sx={{ bgcolor: 'secondary.main' }}>
-                    {userData?.name ? userData.name.charAt(0).toUpperCase() : <PersonIcon />}
+                  <Avatar sx={{ bgcolor: 'secondary.main', width: 32, height: 32 }}>
+                    {displayUser.name ? displayUser.name.charAt(0).toUpperCase() : <PersonIcon fontSize='small' />}
                   </Avatar>
+                  <Typography variant="body2" sx={{ fontWeight: 600, display: { xs: 'none', sm: 'block' } }}>
+                    {displayUser.name || "Guest"}
+                  </Typography>
                 </Box>
               </Box>
             </Toolbar>
           </Container>
         </AppBar>
 
-        {/* Profile Dialog */}
+        {/* Improved Profile Dialog */}
         <Dialog
           open={openProfile}
           onClose={() => setOpenProfile(false)}
           maxWidth="sm"
           fullWidth
+          PaperProps={{
+            sx: { borderRadius: 3, padding: 1 }
+          }}
         >
-          <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Avatar sx={{ width: 56, height: 56, bgcolor: 'primary.main' }}>
-              {userData?.name ? userData.name.charAt(0).toUpperCase() : <PersonIcon />}
-            </Avatar>
-            <Box>
-              <Typography variant="h6">{userData?.name}</Typography>
-              <Typography variant="body2" color="text.secondary">
-                {userData?.username}
-              </Typography>
-            </Box>
-            <Button
-              startIcon={<LogoutIcon />}
-              color="error"
-              onClick={handleLogout}
-              sx={{ ml: 'auto' }}
-            >
-              Logout
-            </Button>
+          <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
+            <Typography variant="h6" fontWeight="bold">User Profile</Typography>
+            <IconButton onClick={() => setOpenProfile(false)} size="small">
+              <HistoryIcon /> {/* Close/Back Icon usually, but logic kept same */}
+            </IconButton>
           </DialogTitle>
-          <Divider />
-          <DialogContent>
-            <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-              <HistoryIcon color="action" /> Meeting History
-            </Typography>
 
+          <DialogContent>
+            {/* User Info Card */}
+            <Paper elevation={0} sx={{
+              p: 3,
+              mb: 4,
+              bgcolor: 'grey.50',
+              borderRadius: 3,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 3
+            }}>
+              <Avatar sx={{ width: 80, height: 80, fontSize: '2rem', bgcolor: 'primary.main' }}>
+                {displayUser.name ? displayUser.name.charAt(0).toUpperCase() : <PersonIcon />}
+              </Avatar>
+              <Box sx={{ flex: 1 }}>
+                <Typography variant="h5" fontWeight="700" color="text.primary">
+                  {displayUser.name || "Guest User"}
+                </Typography>
+                <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
+                  {displayUser.username || "No email provided"}
+                </Typography>
+                <Button
+                  variant="outlined"
+                  color="error"
+                  size="small"
+                  startIcon={<LogoutIcon />}
+                  onClick={handleLogout}
+                  sx={{ borderRadius: 2 }}
+                >
+                  Log Out
+                </Button>
+              </Box>
+            </Paper>
+
+            <Divider sx={{ my: 2 }}>
+              <Chip label="Meeting History" />
+            </Divider>
+
+            {/* History List */}
             {history.length === 0 ? (
-              <Typography color="text.secondary" align="center" sx={{ py: 4 }}>
-                No meeting history found.
-              </Typography>
+              <Box sx={{ textAlign: 'center', py: 4, opacity: 0.6 }}>
+                <HistoryIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
+                <Typography color="text.secondary">
+                  No recent meetings found.
+                </Typography>
+              </Box>
             ) : (
-              <List sx={{ maxHeight: '400px', overflow: 'auto' }}>
-                {history.map((meeting) => (
-                  <Paper key={meeting._id} elevation={1} sx={{ mb: 2, overflow: 'hidden' }}>
-                    <ListItem
-                      secondaryAction={
-                        <Box>
-                          <Button
-                            size="small"
-                            onClick={() => {
-                              setOpenProfile(false);
-                              navigate(`/${meeting.meetingCode}`);
-                            }}
-                          >
-                            Join
-                          </Button>
-                          <IconButton edge="end" aria-label="delete" onClick={() => handleDeleteMeeting(meeting._id)}>
-                            <DeleteIcon color="error" fontSize='small' />
-                          </IconButton>
-                        </Box>
+              <List sx={{ maxHeight: '300px', overflow: 'auto' }}>
+                {history.slice().reverse().map((meeting) => (
+                  <ListItem
+                    key={meeting._id}
+                    sx={{
+                      mb: 2,
+                      bgcolor: 'white',
+                      border: '1px solid',
+                      borderColor: 'grey.200',
+                      borderRadius: 2,
+                      '&:hover': { borderColor: 'primary.main' }
+                    }}
+                  >
+                    <ListItemText
+                      primary={
+                        <Typography variant="subtitle2" fontWeight="600" color="primary">
+                          {meeting.meetingCode}
+                        </Typography>
                       }
-                    >
-                      <ListItemText
-                        primary={
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <CodeIcon fontSize="small" color="primary" />
-                            <Typography variant="subtitle1" fontWeight="bold">
-                              {meeting.meetingCode}
-                            </Typography>
-                          </Box>
-                        }
-                        secondary={
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                            <DateIcon fontSize="small" color="action" />
-                            <Typography variant="body2" color="text.secondary">
-                              {formatDate(meeting.date)}
-                            </Typography>
-                          </Box>
-                        }
-                      />
-                    </ListItem>
-                  </Paper>
+                      secondary={formatDate(meeting.date)}
+                    />
+                    <Stack direction="row" spacing={1}>
+                      <Button
+                        size="small"
+                        variant="contained"
+                        disableElevation
+                        onClick={() => {
+                          setOpenProfile(false);
+                          navigate(`/${meeting.meetingCode}`);
+                        }}
+                      >
+                        Re-Join
+                      </Button>
+                      <IconButton size="small" color="error" onClick={() => handleDeleteMeeting(meeting._id)}>
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Stack>
+                  </ListItem>
                 ))}
               </List>
             )}
           </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenProfile(false)}>Close</Button>
-          </DialogActions>
         </Dialog>
 
         {/* Main Content */}

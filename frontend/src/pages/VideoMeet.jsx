@@ -597,7 +597,7 @@ export default function VideoMeetComponent() {
 
                     <video className={styles.meetUserVideo} ref={localVideoref} autoPlay muted></video>
 
-                    <div className={styles.conferenceView}>
+                    <div className={styles.conferenceView} data-grid={videos.length || 1}>
                         {videos.map((video) => (
                             <div key={video.socketId}>
                                 <video

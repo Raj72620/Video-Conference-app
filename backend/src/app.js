@@ -24,9 +24,11 @@ app.use("/api/v1/users", userRoutes);
 
 const start = async () => {
     try {
-        const connectionDb = await mongoose.connect(process.env.MONGO_ATLAS);
+        const connectionDb = await mongoose.connect(process.env.MONGO_ATLAS, {
+            dbName: "ZoomApp"
+        });
         console.log(`MONGO Connected DB Host: ${connectionDb.connection.host}`);
-        
+
         server.listen(app.get("port"), () => {
             console.log(`LISTENING ON PORT ${app.get("port")}`);  // Will show actual port being used
         });

@@ -1,31 +1,32 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useContext } from 'react';
 import io from "socket.io-client";
-import { 
-  Badge, 
-  IconButton, 
-  TextField, 
-  Button,
-  Container,
-  Paper,
-  Box,
-  Typography,
-  Avatar,
-  InputAdornment
+import {
+    Badge,
+    IconButton,
+    TextField,
+    Button,
+    Container,
+    Paper,
+    Box,
+    Typography,
+    Avatar,
+    InputAdornment
 } from '@mui/material';
 import {
-  Videocam as VideocamIcon,
-  VideocamOff as VideocamOffIcon,
-  CallEnd as CallEndIcon,
-  Mic as MicIcon,
-  MicOff as MicOffIcon,
-  ScreenShare as ScreenShareIcon,
-  StopScreenShare as StopScreenShareIcon,
-  Chat as ChatIcon,
-  Person as PersonIcon,
-  MeetingRoom as MeetingRoomIcon
+    Videocam as VideocamIcon,
+    VideocamOff as VideocamOffIcon,
+    CallEnd as CallEndIcon,
+    Mic as MicIcon,
+    MicOff as MicOffIcon,
+    ScreenShare as ScreenShareIcon,
+    StopScreenShare as StopScreenShareIcon,
+    Chat as ChatIcon,
+    Person as PersonIcon,
+    MeetingRoom as MeetingRoomIcon
 } from '@mui/icons-material';
 import styles from "../styles/videoComponent.module.css";
 import server from '../environment';
+import { AuthContext } from '../contexts/AuthContext.jsx'; // Import AuthContext
 
 const server_url = server;
 var connections = {};
@@ -54,6 +55,25 @@ export default function VideoMeetComponent() {
     const [username, setUsername] = useState("");
     const videoRef = useRef([]);
     const [videos, setVideos] = useState([]);
+
+    // Get userData from Context
+    const { userData } = useContext(AuthContext);
+
+    // Initialize username if user is logged in
+    useEffect(() => {
+        if (userData?.name) {
+            setUsername(userData.name);
+            setAskForUsername(false); // Skip asking name if user is logged in
+        }
+    }, [userData]);
+
+    // Effect to start connection automatically if username is set (via effect above)
+    // Needs careful handling to avoid double connection or errors if permissions aren't ready
+    useEffect(() => {
+        if (userData?.name && askForUsername === false) {
+            getMedia();
+        }
+    }, [askForUsername, userData]); // Dependency on state change
 
     const getDisplayMediaSuccess = useCallback((stream) => {
         console.log("HERE");
@@ -132,9 +152,9 @@ export default function VideoMeetComponent() {
             }
 
             if (videoAvailable || audioAvailable) {
-                const userMediaStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: videoAvailable, 
-                    audio: audioAvailable 
+                const userMediaStream = await navigator.mediaDevices.getUserMedia({
+                    video: videoAvailable,
+                    audio: audioAvailable
                 });
                 if (userMediaStream) {
                     window.localStream = userMediaStream;
@@ -248,8 +268,8 @@ export default function VideoMeetComponent() {
             socketRef.current.on('user-joined', (id, clients) => {
                 clients.forEach((socketListId) => {
                     connections[socketListId] = new RTCPeerConnection(peerConfigConnections);
-                    
-                    connections[socketListId].onicecandidate = function(event) {
+
+                    connections[socketListId].onicecandidate = function (event) {
                         if (event.candidate != null) {
                             socketRef.current.emit('signal', socketListId, JSON.stringify({ 'ice': event.candidate }));
                         }
@@ -424,16 +444,16 @@ export default function VideoMeetComponent() {
                         backgroundColor: 'background.paper'
                     }}>
                         <Box sx={{ mb: 4 }}>
-                            <Avatar sx={{ 
-                                bgcolor: 'primary.main', 
-                                width: 60, 
+                            <Avatar sx={{
+                                bgcolor: 'primary.main',
+                                width: 60,
                                 height: 60,
                                 margin: '0 auto 16px'
                             }}>
                                 <MeetingRoomIcon fontSize="large" />
                             </Avatar>
-                            <Typography variant="h4" component="h2" sx={{ 
-                                fontWeight: 600, 
+                            <Typography variant="h4" component="h2" sx={{
+                                fontWeight: 600,
                                 mb: 1,
                                 color: 'text.primary'
                             }}>
@@ -444,9 +464,9 @@ export default function VideoMeetComponent() {
                             </Typography>
                         </Box>
 
-                        <Box sx={{ 
-                            display: 'flex', 
-                            flexDirection: 'column', 
+                        <Box sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
                             gap: 3,
                             mb: 4
                         }}>
@@ -497,17 +517,17 @@ export default function VideoMeetComponent() {
                             </Button>
                         </Box>
 
-                        <Box sx={{ 
+                        <Box sx={{
                             mt: 4,
                             borderRadius: 2,
                             overflow: 'hidden',
                             boxShadow: 3,
                             border: '1px solid rgba(0, 0, 0, 0.1)'
                         }}>
-                            <video 
-                                ref={localVideoref} 
-                                autoPlay 
-                                muted 
+                            <video
+                                ref={localVideoref}
+                                autoPlay
+                                muted
                                 style={{
                                     width: '100%',
                                     display: 'block'
@@ -556,7 +576,7 @@ export default function VideoMeetComponent() {
                             {(video === true) ? <VideocamIcon /> : <VideocamOffIcon />}
                         </IconButton>
                         <IconButton onClick={handleEndCall} style={{ color: "red" }}>
-                            <CallEndIcon  />
+                            <CallEndIcon />
                         </IconButton>
                         <IconButton onClick={handleAudio} style={{ color: "white" }}>
                             {audio === true ? <MicIcon /> : <MicOffIcon />}

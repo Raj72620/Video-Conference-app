@@ -9,11 +9,13 @@ import { Meeting } from "../models/meeting.model.js";
 // User Login
 
 const login = async (req, res) => {
+    // Debug log to check incoming request
+    console.log("Login Request Body:", req.body);
 
     const { username, password } = req.body;
 
     if (!username || !password) {
-        return res.status(400).json({ message: "Please Provide" })
+        return res.status(400).json({ message: "Please Provide Username and Password" })
     }
 
     try {
@@ -30,12 +32,12 @@ const login = async (req, res) => {
 
             user.token = token;
             await user.save();
-            return res.status(httpStatus.OK).json({ 
+            return res.status(httpStatus.OK).json({
                 token: token,
                 user: {
                     name: user.name,
                     username: user.username
-                } 
+                }
             })
         } else {
             return res.status(httpStatus.UNAUTHORIZED).json({ message: "Invalid Username or password" })
@@ -46,9 +48,10 @@ const login = async (req, res) => {
     }
 }
 
-  //User Register 
+//User Register 
 
 const register = async (req, res) => {
+    console.log("Register Request Body:", req.body);
     const { name, username, password } = req.body;
 
 
@@ -120,9 +123,9 @@ const deleteHistory = async (req, res) => {
             return res.status(httpStatus.UNAUTHORIZED).json({ message: "Invalid token" });
         }
 
-        const meeting = await Meeting.findOneAndDelete({ 
-            _id: meetingId, 
-            user_id: user.username 
+        const meeting = await Meeting.findOneAndDelete({
+            _id: meetingId,
+            user_id: user.username
         });
 
         if (!meeting) {

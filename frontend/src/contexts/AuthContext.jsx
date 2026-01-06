@@ -64,8 +64,10 @@ export const AuthProvider = ({ children }) => {
 
             if (request.status === httpStatus.OK) {
                 localStorage.setItem("token", request.data.token);
-                localStorage.setItem("user", JSON.stringify(request.data.user)); // Save user data
-                setUserData(request.data.user); // Update state
+                if (request.data.user) {
+                    localStorage.setItem("user", JSON.stringify(request.data.user)); // Save user data
+                    setUserData(request.data.user); // Update state
+                }
                 router("/home")
             }
         } catch (err) {

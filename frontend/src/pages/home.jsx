@@ -110,7 +110,16 @@ function HomeComponent() {
   }, []);
 
   // Use a derived state or memo for the display user to genericize fallback
-  const displayUser = userData || JSON.parse(localStorage.getItem("user") || '{}');
+  const displayUser = (() => {
+    try {
+      if (userData) return userData;
+      const stored = localStorage.getItem("user");
+      if (!stored || stored === "undefined") return {};
+      return JSON.parse(stored);
+    } catch {
+      return {};
+    }
+  })();
 
   useEffect(() => {
     if (openProfile) {

@@ -112,6 +112,58 @@ function HomeComponent() {
   // Use a derived state or memo for the display user to genericize fallback
   const displayUser = userData || JSON.parse(localStorage.getItem("user") || '{}');
 
+  useEffect(() => {
+    if (openProfile) {
+      fetchHistory();
+    }
+  }, [openProfile]);
+
+  const fetchHistory = async () => {
+    try {
+      const data = await getHistoryOfUser();
+      setHistory(data);
+    } catch (err) {
+      console.error("Failed to fetch history", err);
+    }
+  };
+
+  const handleJoinVideoCall = async () => {
+    if (!meetingCode.trim()) return;
+    await addToUserHistory(meetingCode);
+    navigate(`/${meetingCode}`);
+  };
+
+  const handleCreateNewMeeting = () => {
+    const randomCode = Math.random().toString(36).substring(2, 8);
+    navigate(`/${randomCode}`);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/auth");
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const handleDeleteMeeting = async (meetingId) => {
+    try {
+      await deleteMeeting(meetingId);
+      fetchHistory(); // Refresh list
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   return (
     <ThemeProvider theme={theme}>
       <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>

@@ -114,10 +114,21 @@ export const AuthProvider = ({ children }) => {
         }
     }
 
+    const refreshUserData = () => {
+        try {
+            const user = localStorage.getItem("user");
+            if (user) {
+                setUserData(JSON.parse(user));
+            }
+        } catch (e) {
+            console.error("Error refreshing user data", e);
+        }
+    }
+
     // Update the data object to include the new function
     const data = {
         userData, setUserData, addToUserHistory, getHistoryOfUser,
-        handleRegister, handleLogin, deleteMeeting
+        handleRegister, handleLogin, deleteMeeting, refreshUserData
     }
 
     return (

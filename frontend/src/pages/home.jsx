@@ -92,6 +92,19 @@ function HomeComponent() {
   const [history, setHistory] = useState([]);
 
   useEffect(() => {
+    // Force refresh user data from localStorage when Home mounts
+    try {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        console.log("Profile User Data:", parsedUser);
+      }
+    } catch (e) {
+      console.error("Error parsing user data", e);
+    }
+  }, []);
+
+  useEffect(() => {
     if (openProfile) {
       fetchHistory();
     }

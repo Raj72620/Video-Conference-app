@@ -24,13 +24,24 @@ app.use("/api/v1/users", userRoutes);
 
 const start = async () => {
     try {
-        const connectionDb = await mongoose.connect(process.env.MONGO_ATLAS, {
+        console.log("Connecting to MongoDB...");
+        // Hack to fix the datbase name if it is hardcoded in the env var
+        let mongoUrl = process.env.MONGO_ATLAS;
+        if (mongoUrl && mongoUrl.includes("/test")) {
+            console.log("Detected '/test' in connection string. Replacing with '/ZoomApp'...");
+            // Replace only the first occurrence which is usually the db name
+            mongoUrl = mongoUrl.replace("/test", "/ZoomApp");
+        }
+
+        const connectionDb = await mongoose.connect(mongoUrl, {
             dbName: "ZoomApp"
         });
+
         console.log(`MONGO Connected DB Host: ${connectionDb.connection.host}`);
+        console.log(`MONGO Connected DB Name: ${connectionDb.connection.name}`);
 
         server.listen(app.get("port"), () => {
-            console.log(`LISTENING ON PORT ${app.get("port")}`);  // Will show actual port being used
+            console.log(`LISTENING ON PORT ${app.get("port")}`);
         });
     } catch (error) {
         console.error("Failed to connect to MongoDB:", error);

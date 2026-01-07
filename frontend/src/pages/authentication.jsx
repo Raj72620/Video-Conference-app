@@ -72,9 +72,24 @@ export default function Authentication() {
             }
         } catch (err) {
             console.error("Auth error:", err);
-            const errMsg = err.message || err.response?.data?.message || "Operation failed";
 
-            if (errMsg.includes("User Not Found") || err.status === 404) {
+            // Extract error message from various possible error structures
+            let errMsg = "Operation failed";
+
+            if (typeof err === 'string') {
+                errMsg = err;
+            } else if (err?.message) {
+                errMsg = err.message;
+            } else if (err?.response?.data?.message) {
+                errMsg = err.response.data.message;
+            } else if (err?.data?.message) {
+                errMsg = err.data.message; // From AuthContext re-throw
+            } else if (JSON.stringify(err) !== "{}") {
+                // Fallback for non-empty objects
+                errMsg = JSON.stringify(err);
+            }
+
+            if (errMsg.includes("User Not Found") || (err?.status === 404)) {
                 setError("User not found. Please Sign Up first.");
             } else if (errMsg.includes("already exists")) {
                 setError("User already exists. Please login instead.");

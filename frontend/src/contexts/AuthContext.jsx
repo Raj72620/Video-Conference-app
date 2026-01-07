@@ -59,16 +59,17 @@ export const AuthProvider = ({ children }) => {
             if (response.status === httpStatus.OK) {
                 localStorage.setItem("token", response.data.token);
 
-                // Store complete user data
+                // Store complete user data with safely accessed properties
+                const backendUser = response.data.user || {};
+
                 const userData = {
-                    name: response.data.user.name,
-                    username: response.data.user.username,
-                    // Add email if it's separate from username
-                    email: response.data.user.email || response.data.user.username
+                    name: backendUser.name || "Guest",
+                    username: backendUser.username || username,
+                    email: backendUser.email || backendUser.username || "No email"
                 };
 
                 localStorage.setItem("user", JSON.stringify(userData));
-                setUserData(userData); // Update state
+                setUserData(userData);
                 router("/home");
                 return response.data;
             }

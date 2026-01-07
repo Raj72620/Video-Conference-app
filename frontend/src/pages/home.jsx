@@ -32,7 +32,8 @@ import {
   Code as CodeIcon,
   Person as PersonIcon,
   CalendarToday as DateIcon,
-  Delete as DeleteIcon
+  Delete as DeleteIcon,
+  Close as CloseIcon
 } from '@mui/icons-material';
 import { AuthContext } from '../contexts/AuthContext';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
@@ -87,31 +88,20 @@ const theme = createTheme({
 function HomeComponent() {
   const navigate = useNavigate();
   const [meetingCode, setMeetingCode] = useState("");
-  const { addToUserHistory, getHistoryOfUser, userData, deleteMeeting } = useContext(AuthContext);
+  const { addToUserHistory, getHistoryOfUser, userData, deleteMeeting, logout } = useContext(AuthContext);
   const [openProfile, setOpenProfile] = useState(false);
   const [history, setHistory] = useState([]);
 
-  // Ensure user data is up to date from local storage
-  useEffect(() => {
-    const fetchUser = () => {
+  // Get user data from context or localStorage
+  const displayUser = userData || (() => {
+    try {
       const storedUser = localStorage.getItem("user");
-      if (storedUser) {
-        try {
-          const parsedUser = JSON.parse(storedUser);
-          // If the context userData is empty but we have it in local storage, you might want to force an update 
-          // deeper in the app structure, but for now, we'll ensure we use this for display if needed.
-          console.log("Loaded user:", parsedUser);
-        } catch (e) {
-          console.error("Invalid user data in storage");
-        }
-      }
-    };
-    fetchUser();
-  }, []);
-
-  // userData is initialized from localStorage in AuthContext, so we can trust it.
-  // We default to an empty object if userData is null/undefined to prevent access errors.
-  const displayUser = userData || {};
+      return storedUser ? JSON.parse(storedUser) : { name: "Guest", username: "No email provided" };
+    } catch (e) {
+      console.error("Error parsing stored user:", e);
+      return { name: "Guest", username: "No email provided" };
+    }
+  })();
 
   useEffect(() => {
     if (openProfile) {
@@ -129,9 +119,17 @@ function HomeComponent() {
   };
 
   const handleJoinVideoCall = async () => {
-    if (!meetingCode.trim()) return;
-    await addToUserHistory(meetingCode);
-    navigate(`/${meetingCode}`);
+    if (!meetingCode.trim()) {
+      alert("Please enter a meeting code");
+      return;
+    }
+    try {
+      await addToUserHistory(meetingCode);
+      navigate(`/${meetingCode}`);
+    } catch (err) {
+      console.error("Failed to join meeting", err);
+      alert("Failed to join meeting. Please try again.");
+    }
   };
 
   const handleCreateNewMeeting = () => {
@@ -140,20 +138,22 @@ function HomeComponent() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    navigate("/auth");
+    logout();
   };
 
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (e) {
+      return "Invalid date";
+    }
   };
 
   const handleDeleteMeeting = async (meetingId) => {
@@ -161,7 +161,8 @@ function HomeComponent() {
       await deleteMeeting(meetingId);
       fetchHistory(); // Refresh list
     } catch (err) {
-      console.error(err);
+      console.error("Failed to delete meeting:", err);
+      alert("Failed to delete meeting. Please try again.");
     }
   }
 
@@ -222,7 +223,7 @@ function HomeComponent() {
           <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
             <Typography variant="h6" fontWeight="bold">User Profile</Typography>
             <IconButton onClick={() => setOpenProfile(false)} size="small">
-              <HistoryIcon /> {/* Close/Back Icon usually, but logic kept same */}
+              <CloseIcon />
             </IconButton>
           </DialogTitle>
 
@@ -245,7 +246,7 @@ function HomeComponent() {
                   {displayUser.name || "Guest User"}
                 </Typography>
                 <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
-                  {displayUser.username || "No email provided"}
+                  {displayUser.username || displayUser.email || "No email provided"}
                 </Typography>
                 <Button
                   variant="outlined"
@@ -363,6 +364,11 @@ function HomeComponent() {
                     variant="outlined"
                     value={meetingCode}
                     onChange={(e) => setMeetingCode(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        handleJoinVideoCall();
+                      }
+                    }}
                     InputProps={{
                       startAdornment: (
                         <Box sx={{ mr: 1, color: 'primary.main' }}>

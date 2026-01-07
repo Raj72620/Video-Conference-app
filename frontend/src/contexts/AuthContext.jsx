@@ -1,9 +1,8 @@
 import axios from "axios";
 import httpStatus from "http-status";
-import { createContext, useContext, useState } from "react";
+import { createContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import server from "../environment";
-
 
 export const AuthContext = createContext({});
 
@@ -15,19 +14,15 @@ const client = axios.create({
 })
 
 export const AuthProvider = ({ children }) => {
-
-    // const authContext = useContext(AuthContext); // REMOVED: Circular dependency
-
-
     const [userData, setUserData] = useState(() => {
         try {
             const user = localStorage.getItem("user");
             return user ? JSON.parse(user) : null;
         } catch (e) {
+            console.error("Error parsing user data:", e);
             return null;
         }
     });
-
 
     const router = useNavigate();
 
@@ -39,7 +34,7 @@ export const AuthProvider = ({ children }) => {
                 password
             });
 
-            console.log("Registration response:", response); // Debug log
+            console.log("Registration response:", response);
 
             if (response.status !== httpStatus.CREATED) {
                 throw new Error(response.data?.message || "Registration failed");
@@ -54,55 +49,60 @@ export const AuthProvider = ({ children }) => {
 
     const handleLogin = async (username, password) => {
         try {
-            let request = await client.post("/login", {
+            const response = await client.post("/login", {
                 username: username,
                 password: password
             });
 
-            console.log(username, password)
-            console.log(request.data)
+            console.log("Login response:", response.data);
 
-            if (request.status === httpStatus.OK) {
-                localStorage.setItem("token", request.data.token);
-                if (request.data.user) {
-                    localStorage.setItem("user", JSON.stringify(request.data.user)); // Save user data
-                    setUserData(request.data.user); // Update state
-                }
-                router("/home")
+            if (response.status === httpStatus.OK) {
+                localStorage.setItem("token", response.data.token);
+
+                // Store complete user data
+                const userData = {
+                    name: response.data.user.name,
+                    username: response.data.user.username,
+                    // Add email if it's separate from username
+                    email: response.data.user.email || response.data.user.username
+                };
+
+                localStorage.setItem("user", JSON.stringify(userData));
+                setUserData(userData); // Update state
+                router("/home");
+                return response.data;
             }
         } catch (err) {
-            throw err;
+            console.error("Login error:", err.response?.data || err.message);
+            throw err.response?.data || { message: "Login failed" };
         }
     }
 
     const getHistoryOfUser = async () => {
         try {
-            let request = await client.get("/get_all_activity", {
+            const response = await client.get("/get_all_activity", {
                 params: {
                     token: localStorage.getItem("token")
                 }
             });
-            return request.data
-        } catch
-        (err) {
+            return response.data;
+        } catch (err) {
             throw err;
         }
     }
 
     const addToUserHistory = async (meetingCode) => {
         try {
-            let request = await client.post("/add_to_activity", {
+            const response = await client.post("/add_to_activity", {
                 token: localStorage.getItem("token"),
                 meeting_code: meetingCode
             });
-            return request
+            return response.data;
         } catch (e) {
             throw e;
         }
     }
 
-
-    // Add this new function to the AuthProvider component
     const deleteMeeting = async (meetingId) => {
         try {
             await client.delete(`/delete_meeting/${meetingId}`, {
@@ -110,7 +110,7 @@ export const AuthProvider = ({ children }) => {
                     token: localStorage.getItem("token")
                 }
             });
-            return true; // Indicate success
+            return true;
         } catch (err) {
             throw err;
         }
@@ -127,16 +127,28 @@ export const AuthProvider = ({ children }) => {
         }
     }
 
-    // Update the data object to include the new function
+    const logout = () => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        setUserData(null);
+        router("/auth");
+    }
+
     const data = {
-        userData, setUserData, addToUserHistory, getHistoryOfUser,
-        handleRegister, handleLogin, deleteMeeting, refreshUserData
+        userData,
+        setUserData,
+        addToUserHistory,
+        getHistoryOfUser,
+        handleRegister,
+        handleLogin,
+        deleteMeeting,
+        refreshUserData,
+        logout
     }
 
     return (
         <AuthContext.Provider value={data}>
             {children}
         </AuthContext.Provider>
-    )
-
+    );
 }

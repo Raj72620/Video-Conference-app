@@ -9,7 +9,7 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Typography from '@mui/material/Typography';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { AuthContext } from '../contexts/AuthContext';
-import { Snackbar, CircularProgress } from '@mui/material';
+import { Snackbar, CircularProgress, Alert } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
 
 const defaultTheme = createTheme({
@@ -41,10 +41,21 @@ export default function Authentication() {
 
     const { handleRegister, handleLogin } = React.useContext(AuthContext);
 
-    let handleAuth = async () => {
+    const handleAuth = async () => {
         try {
             setLoading(true);
             setError("");
+
+            // Basic validation
+            if (!username.trim() || !password.trim()) {
+                setError("Please fill in all fields");
+                return;
+            }
+
+            if (formState === 1 && !name.trim()) {
+                setError("Please enter your name");
+                return;
+            }
 
             if (formState === 0) {
                 // Login
@@ -52,22 +63,23 @@ export default function Authentication() {
             } else {
                 // Register
                 const result = await handleRegister(name, username, password);
-
-                if (result?.message) {
-                    setMessage(result.message);
-                    setOpen(true);
-                    setFormState(0);
-                    setName("");
-                    setUsername("");
-                    setPassword("");
-                }
+                setMessage(result?.message || "Registration successful!");
+                setOpen(true);
+                setFormState(0); // Switch to login after registration
+                setName("");
+                setUsername("");
+                setPassword("");
             }
         } catch (err) {
             console.error("Auth error:", err);
-            // Check if error message indicates user not found
-            let errMsg = err.message || "Operation failed";
+            const errMsg = err.message || err.response?.data?.message || "Operation failed";
+
             if (errMsg.includes("User Not Found") || err.status === 404) {
                 setError("User not found. Please Sign Up first.");
+            } else if (errMsg.includes("already exists")) {
+                setError("User already exists. Please login instead.");
+            } else if (errMsg.includes("Invalid Username or password")) {
+                setError("Invalid username or password.");
             } else {
                 setError(errMsg);
             }
@@ -76,6 +88,11 @@ export default function Authentication() {
         }
     }
 
+    const handleKeyPress = (e) => {
+        if (e.key === 'Enter') {
+            handleAuth();
+        }
+    }
 
     return (
         <ThemeProvider theme={defaultTheme}>
@@ -164,6 +181,7 @@ export default function Authentication() {
                                         value={name}
                                         autoFocus
                                         onChange={(e) => setName(e.target.value)}
+                                        onKeyPress={handleKeyPress}
                                         sx={{ mb: 2 }}
                                     />
                                 )}
@@ -178,6 +196,7 @@ export default function Authentication() {
                                     value={username}
                                     autoFocus={formState === 0}
                                     onChange={(e) => setUsername(e.target.value)}
+                                    onKeyPress={handleKeyPress}
                                     sx={{ mb: 2 }}
                                 />
                                 <TextField
@@ -189,14 +208,15 @@ export default function Authentication() {
                                     value={password}
                                     type="password"
                                     onChange={(e) => setPassword(e.target.value)}
+                                    onKeyPress={handleKeyPress}
                                     id="password"
                                     sx={{ mb: 2 }}
                                 />
 
                                 {error && (
-                                    <Typography color="error" variant="body2" sx={{ mt: 1, textAlign: 'center' }}>
+                                    <Alert severity="error" sx={{ mt: 1, mb: 2 }}>
                                         {error}
-                                    </Typography>
+                                    </Alert>
                                 )}
 
                                 <Button
@@ -225,9 +245,13 @@ export default function Authentication() {
             <Snackbar
                 open={open}
                 autoHideDuration={4000}
-                message={message}
                 onClose={() => setOpen(false)}
-            />
+                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+            >
+                <Alert onClose={() => setOpen(false)} severity="success" sx={{ width: '100%' }}>
+                    {message}
+                </Alert>
+            </Snackbar>
         </ThemeProvider>
     );
 }

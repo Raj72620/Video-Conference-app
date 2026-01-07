@@ -1,59 +1,50 @@
 import httpStatus from "http-status";
 import { User } from "../models/user.model.js";
-import bcrypt, { hash } from "bcrypt"
-
-import crypto from "crypto"
+import bcrypt from "bcrypt";
+import crypto from "crypto";
 import { Meeting } from "../models/meeting.model.js";
 
-
-// User Login
-
 const login = async (req, res) => {
-    // Debug log to check incoming request
     console.log("Login Request Body:", req.body);
-
     const { username, password } = req.body;
 
     if (!username || !password) {
-        return res.status(400).json({ message: "Please Provide Username and Password" })
+        return res.status(400).json({ message: "Please Provide Username and Password" });
     }
 
     try {
         const user = await User.findOne({ username });
         if (!user) {
-            return res.status(httpStatus.NOT_FOUND).json({ message: "User Not Found" })
+            return res.status(httpStatus.NOT_FOUND).json({ message: "User Not Found" });
         }
 
-
-        let isPasswordCorrect = await bcrypt.compare(password, user.password)
+        const isPasswordCorrect = await bcrypt.compare(password, user.password);
 
         if (isPasswordCorrect) {
-            let token = crypto.randomBytes(20).toString("hex");
-
+            const token = crypto.randomBytes(20).toString("hex");
             user.token = token;
             await user.save();
+
             return res.status(httpStatus.OK).json({
                 token: token,
                 user: {
                     name: user.name,
-                    username: user.username
+                    username: user.username,
+                    email: user.username // Assuming username is email
                 }
-            })
+            });
         } else {
-            return res.status(httpStatus.UNAUTHORIZED).json({ message: "Invalid Username or password" })
+            return res.status(httpStatus.UNAUTHORIZED).json({ message: "Invalid Username or password" });
         }
-
     } catch (e) {
-        return res.status(500).json({ message: `Something went wrong ${e}` })
+        console.error("Login error:", e);
+        return res.status(500).json({ message: `Something went wrong: ${e.message}` });
     }
 }
-
-//User Register 
 
 const register = async (req, res) => {
     console.log("Register Request Body:", req.body);
     const { name, username, password } = req.body;
-
 
     try {
         const existingUser = await User.findOne({ username });
@@ -71,24 +62,34 @@ const register = async (req, res) => {
 
         await newUser.save();
 
-        res.status(httpStatus.CREATED).json({ message: "User Registered" })
-
+        res.status(httpStatus.CREATED).json({
+            message: "User Registered Successfully",
+            user: {
+                name: name,
+                username: username,
+                email: username
+            }
+        });
     } catch (e) {
-        res.json({ message: `Something went wrong ${e}` })
+        console.error("Registration error:", e);
+        res.status(500).json({ message: `Something went wrong: ${e.message}` });
     }
-
 }
-
 
 const getUserHistory = async (req, res) => {
     const { token } = req.query;
 
     try {
         const user = await User.findOne({ token: token });
-        const meetings = await Meeting.find({ user_id: user.username })
-        res.json(meetings)
+        if (!user) {
+            return res.status(httpStatus.UNAUTHORIZED).json({ message: "Invalid token" });
+        }
+
+        const meetings = await Meeting.find({ user_id: user.username });
+        res.json(meetings);
     } catch (e) {
-        res.json({ message: `Something went wrong ${e}` })
+        console.error("Get history error:", e);
+        res.status(500).json({ message: `Something went wrong: ${e.message}` });
     }
 }
 
@@ -97,27 +98,29 @@ const addToHistory = async (req, res) => {
 
     try {
         const user = await User.findOne({ token: token });
+        if (!user) {
+            return res.status(httpStatus.UNAUTHORIZED).json({ message: "Invalid token" });
+        }
 
         const newMeeting = new Meeting({
             user_id: user.username,
             meetingCode: meeting_code
-        })
+        });
 
         await newMeeting.save();
 
-        res.status(httpStatus.CREATED).json({ message: "Added code to history" })
+        res.status(httpStatus.CREATED).json({ message: "Added code to history" });
     } catch (e) {
-        res.json({ message: `Something went wrong ${e}` })
+        console.error("Add to history error:", e);
+        res.status(500).json({ message: `Something went wrong: ${e.message}` });
     }
 }
 
-// Add this new function at the bottom (before the export)
 const deleteHistory = async (req, res) => {
     const { meetingId } = req.params;
-    const { token } = req.query; // Get token from query params
+    const { token } = req.query;
 
     try {
-        // Verify user owns the meeting
         const user = await User.findOne({ token });
         if (!user) {
             return res.status(httpStatus.UNAUTHORIZED).json({ message: "Invalid token" });
@@ -134,9 +137,9 @@ const deleteHistory = async (req, res) => {
 
         res.status(httpStatus.OK).json({ message: "Meeting deleted successfully" });
     } catch (e) {
-        res.status(httpStatus.INTERNAL_SERVER_ERROR).json({ message: `Error: ${e}` });
+        console.error("Delete meeting error:", e);
+        res.status(httpStatus.INTERNAL_SERVER_ERROR).json({ message: `Error: ${e.message}` });
     }
 }
 
-// Update the export to include the new function
-export { login, register, getUserHistory, addToHistory, deleteHistory }
+export { login, register, getUserHistory, addToHistory, deleteHistory };

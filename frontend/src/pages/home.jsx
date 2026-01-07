@@ -109,22 +109,9 @@ function HomeComponent() {
     fetchUser();
   }, []);
 
-  // Use a derived state or memo for the display user to genericize fallback
-  const displayUser = (() => {
-    try {
-      // Check if userData exists and has valid content (not just an empty object)
-      if (userData && Object.keys(userData).length > 0) return userData;
-
-      const stored = localStorage.getItem("user");
-      if (!stored || stored === "undefined" || stored === "null") return {};
-
-      const parsed = JSON.parse(stored);
-      return parsed || {};
-    } catch (e) {
-      console.error("Error parsing stored user:", e);
-      return {};
-    }
-  })();
+  // userData is initialized from localStorage in AuthContext, so we can trust it.
+  // We default to an empty object if userData is null/undefined to prevent access errors.
+  const displayUser = userData || {};
 
   useEffect(() => {
     if (openProfile) {

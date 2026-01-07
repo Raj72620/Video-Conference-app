@@ -16,7 +16,7 @@ const client = axios.create({
 
 export const AuthProvider = ({ children }) => {
 
-    const authContext = useContext(AuthContext);
+    // const authContext = useContext(AuthContext); // REMOVED: Circular dependency
 
 
     const [userData, setUserData] = useState(() => {

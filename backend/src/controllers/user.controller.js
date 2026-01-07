@@ -28,9 +28,9 @@ const login = async (req, res) => {
             return res.status(httpStatus.OK).json({
                 token: token,
                 user: {
-                    name: user.name,
+                    name: user.name || user.username || "User", // Fallback if name is missing
                     username: user.username,
-                    email: user.username // Assuming username is email
+                    email: user.username
                 }
             });
         } else {

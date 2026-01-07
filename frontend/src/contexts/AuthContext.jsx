@@ -63,7 +63,7 @@ export const AuthProvider = ({ children }) => {
                 const backendUser = response.data.user || {};
 
                 const userData = {
-                    name: backendUser.name || "Guest",
+                    name: backendUser.name || backendUser.username || "Guest",
                     username: backendUser.username || username,
                     email: backendUser.email || backendUser.username || "No email"
                 };

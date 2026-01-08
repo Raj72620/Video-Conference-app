@@ -16,7 +16,16 @@ const io = connectToSocket(server);
 // Use the PORT from .env or default to 8080
 app.set("port", process.env.PORT || 8080);
 
-app.use(cors());
+app.use(cors({
+    origin: [
+        "https://videoconferenceapp123.netlify.app",
+        "http://localhost:5173",
+        "http://localhost:3000"
+    ],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+}));
 app.use(express.json({ limit: "40kb" }));
 app.use(express.urlencoded({ limit: "40kb", extended: true }));
 

@@ -26,15 +26,8 @@ const start = async () => {
     try {
         console.log("Connecting to MongoDB...");
         // Hack to fix the datbase name if it is hardcoded in the env var
-        let mongoUrl = process.env.MONGO_ATLAS;
-        if (mongoUrl && mongoUrl.includes("/test")) {
-            console.log("Detected '/test' in connection string. Replacing with '/ZoomApp'...");
-            // Replace only the first occurrence which is usually the db name
-            mongoUrl = mongoUrl.replace("/test", "/ZoomApp");
-        }
-
-        const connectionDb = await mongoose.connect(mongoUrl, {
-            dbName: "ZoomApp"
+        const connectionDb = await mongoose.connect(process.env.MONGO_ATLAS, {
+            dbName: "vidtalk"
         });
 
         console.log(`MONGO Connected DB Host: ${connectionDb.connection.host}`);

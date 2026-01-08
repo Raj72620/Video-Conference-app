@@ -250,6 +250,12 @@ export default function VideoMeetComponent() {
         }
     }, [screen, getDisplayMedia]);
 
+    useEffect(() => {
+        if (!askForUsername && localVideoref.current && window.localStream) {
+            localVideoref.current.srcObject = window.localStream;
+        }
+    }, [askForUsername]);
+
     const connectToSocketServer = useCallback(() => {
         socketRef.current = io.connect(server_url, { secure: false });
 

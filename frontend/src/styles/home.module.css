@@ -1,0 +1,308 @@
+/* home.module.css - Redesigned Dashboard */
+
+.homeContainer {
+    min-height: 100vh;
+    background: #050505;
+    /* Deep black/grey */
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+    position: relative;
+    background-image:
+        radial-gradient(circle at 15% 50%, rgba(14, 113, 235, 0.08), transparent 25%),
+        radial-gradient(circle at 85% 30%, rgba(255, 107, 0, 0.05), transparent 25%);
+}
+
+/* Navbar */
+.navbar {
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 40px;
+    background: rgba(10, 10, 10, 0.8);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 100;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: #fff;
+}
+
+.navLinks {
+    display: flex;
+    gap: 32px;
+    align-items: center;
+}
+
+.navItem {
+    color: #888;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.navItem:hover {
+    color: #fff;
+}
+
+.navItem.active {
+    color: #fff;
+}
+
+.authSection {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+/* Main Dashboard Content */
+.mainContent {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 120px 20px 40px;
+    /* Top padding for navbar */
+    position: relative;
+}
+
+/* Clock Section */
+.clockSection {
+    text-align: center;
+    margin-bottom: 60px;
+    position: relative;
+    z-index: 10;
+}
+
+.timeDisplay {
+    font-size: 6rem;
+    font-weight: 800;
+    line-height: 1;
+    background: linear-gradient(180deg, #ffffff 0%, #888 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -4px;
+    margin-bottom: 12px;
+    filter: drop-shadow(0 0 40px rgba(255, 255, 255, 0.1));
+}
+
+.dateDisplay {
+    font-size: 1.1rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: #666;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 8px 24px;
+    border-radius: 100px;
+    display: inline-block;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Action Cards Wrapper */
+.actionCards {
+    display: flex;
+    gap: 40px;
+    align-items: flex-start;
+    justify-content: center;
+    width: 100%;
+    max-width: 1000px;
+    position: relative;
+}
+
+/* Decorator Line connecting cards */
+.actionCards::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 20%;
+    right: 20%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    z-index: 0;
+    display: none;
+    /* Optional style choice */
+}
+
+.card {
+    flex: 1;
+    max-width: 400px;
+    background: rgba(20, 20, 20, 0.6);
+    backdrop-filter: blur(40px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    padding: 32px;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(255, 255, 255, 0.15);
+    background: rgba(30, 30, 30, 0.8);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.cardIcon {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+    font-size: 24px;
+}
+
+.joinIcon {
+    background: rgba(14, 113, 235, 0.1);
+    color: #0e71eb;
+}
+
+.newIcon {
+    background: rgba(255, 107, 0, 0.1);
+    color: #ff6b00;
+}
+
+.cardTitle {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #fff;
+}
+
+.cardDesc {
+    font-size: 14px;
+    color: #888;
+    line-height: 1.5;
+    margin-bottom: 32px;
+    min-height: 42px;
+}
+
+/* Input Styles */
+.inputWrapper {
+    margin-bottom: 20px;
+}
+
+.input {
+    width: 100%;
+    background: #000;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 16px;
+    color: #fff;
+    font-size: 16px;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.input:focus {
+    border-color: #444;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.05);
+}
+
+.label {
+    display: block;
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 8px;
+    margin-left: 4px;
+}
+
+/* Card Actions */
+.btn {
+    width: 100%;
+    padding: 16px;
+    border-radius: 12px;
+    border: none;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btnPrimary {
+    background: #fff;
+    color: #000;
+}
+
+.btnPrimary:hover {
+    background: #e1e1e1;
+}
+
+.btnSecondary {
+    background: linear-gradient(135deg, #FF6B00 0%, #FF4500 100%);
+    color: #fff;
+}
+
+.btnSecondary:hover {
+    opacity: 0.9;
+    transform: scale(1.02);
+}
+
+/* Profile */
+.profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 12px;
+    border-radius: 100px;
+    background: rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+}
+
+.profile:hover {
+    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.profileName {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+@media (max-width: 768px) {
+    .actionCards {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .timeDisplay {
+        font-size: 4rem;
+    }
+
+    .navbar {
+        padding: 0 20px;
+    }
+
+    .navLinks {
+        display: none;
+        /* Simplify for mobile for now or sidebar */
+    }
+}

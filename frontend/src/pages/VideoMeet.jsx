@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback, useContext } from 'react';
 import io from "socket.io-client";
+import axios from 'axios';
 import {
     Badge,
     IconButton,
@@ -12,7 +13,14 @@ import {
     Avatar,
     InputAdornment,
     Tooltip,
-    Fade
+
+    Fade,
+    CircularProgress,
+    Dialog,
+    DialogContent,
+    DialogTitle,
+    DialogActions,
+    LinearProgress
 } from '@mui/material';
 import {
     Videocam as VideocamIcon,
@@ -63,6 +71,8 @@ export default function VideoMeetComponent() {
     const videoRef = useRef([]);
     const [videos, setVideos] = useState([]);
     const [isConnecting, setIsConnecting] = useState(false);
+    const [isHost, setIsHost] = useState(false);
+    const [meetingCode, setMeetingCode] = useState("");
 
     // Draggable self-view state
     const [selfViewPosition, setSelfViewPosition] = useState({
@@ -74,6 +84,13 @@ export default function VideoMeetComponent() {
     const selfViewRef = useRef(null);
     const chatContainerRef = useRef(null);
     const messageInputRef = useRef(null);
+
+    // Recording State
+    const [isRecording, setIsRecording] = useState(false);
+    const mediaRecorderRef = useRef(null);
+    const recordedChunksRef = useRef([]);
+    const [uploading, setUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
 
     // Get userData from Context
     const { userData } = useContext(AuthContext);
@@ -88,6 +105,28 @@ export default function VideoMeetComponent() {
 
     // Auto-start if username is set
     useEffect(() => {
+        const code = window.location.href.split("/").pop();
+        setMeetingCode(code);
+
+        const checkMeetingStatus = async () => {
+            try {
+                const response = await axios.get(`${server}/api/v1/meetings/status/${code}`);
+                if (response.data.isEnded) {
+                    alert("This meeting has ended");
+                    window.location.href = "/home";
+                    return;
+                }
+
+                if (userData?.username && response.data.hostId === userData.username) {
+                    setIsHost(true);
+                }
+            } catch (err) {
+                console.error("Error fetching meeting status", err);
+            }
+        };
+
+        checkMeetingStatus();
+
         if (userData?.name && askForUsername === false) {
             getMedia();
         }
@@ -186,19 +225,38 @@ export default function VideoMeetComponent() {
 
     const getPermissions = useCallback(async () => {
         try {
-            const videoPermission = await navigator.mediaDevices.getUserMedia({ video: true });
+            // OPTIMIZATION: Limit resolution and frame rate for Mesh Topology
+            // This reduces upload bandwidth allow 8-10 users without crashing
+            const videoConstraints = {
+                width: { max: 640, ideal: 480 }, // 480p is enough for grid view
+                height: { max: 480, ideal: 360 },
+                frameRate: { max: 20, ideal: 15 }, // 15-20fps saves SIGNIFICANT CPU
+                aspectRatio: 1.333 // 4:3 is better for grids than 16:9
+            };
+
+            const videoPermission = await navigator.mediaDevices.getUserMedia({ video: videoConstraints });
             setVideoAvailable(!!videoPermission);
 
-            const audioPermission = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const audioPermission = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true,
+                }
+            });
             setAudioAvailable(!!audioPermission);
 
             setScreenAvailable(!!navigator.mediaDevices.getDisplayMedia);
 
             if (videoPermission || audioPermission) {
                 const userMediaStream = await navigator.mediaDevices.getUserMedia({
-                    video: videoAvailable,
-                    audio: audioAvailable
+                    video: videoAvailable ? videoConstraints : false,
+                    audio: audioAvailable ? {
+                        echoCancellation: true,
+                        noiseSuppression: true
+                    } : false
                 });
+
                 if (userMediaStream) {
                     window.localStream = userMediaStream;
                     if (localVideoref.current) {
@@ -270,13 +328,28 @@ export default function VideoMeetComponent() {
 
     const getUserMedia = useCallback(() => {
         if ((video && videoAvailable) || (audio && audioAvailable)) {
-            navigator.mediaDevices.getUserMedia({ video: video, audio: audio })
+            // Re-apply optimized constraints when toggling media
+            const videoConstraints = video ? {
+                width: { max: 640, ideal: 480 },
+                height: { max: 480, ideal: 360 },
+                frameRate: { max: 20, ideal: 15 },
+                aspectRatio: 1.333
+            } : false;
+
+            navigator.mediaDevices.getUserMedia({
+                video: videoConstraints,
+                audio: audio ? {
+                    echoCancellation: true,
+                    noiseSuppression: true
+                } : false
+            })
                 .then(getUserMediaSuccess)
                 .catch((e) => console.log(e));
         } else {
             try {
-                let tracks = localVideoref.current.srcObject.getTracks();
-                tracks.forEach(track => track.stop());
+                if (window.localStream) {
+                    window.localStream.getTracks().forEach(track => track.stop());
+                }
             } catch (e) { }
         }
     }, [video, audio, videoAvailable, audioAvailable, getUserMediaSuccess]);
@@ -352,7 +425,24 @@ export default function VideoMeetComponent() {
 
                     if (window.localStream !== undefined && window.localStream !== null) {
                         connections[socketListId].addStream(window.localStream);
+
+                        // OPTIMIZATION: Manually throttle bandwidth for each peer connection
+                        // Mesh network: 10 users = 9 uploads. We MUST limit bitrate to save bandwidth.
+                        try {
+                            const senders = connections[socketListId].getSenders();
+                            senders.forEach((sender) => {
+                                if (sender.track && sender.track.kind === 'video') {
+                                    const params = sender.getParameters();
+                                    if (!params.encodings) params.encodings = [{}];
+                                    params.encodings[0].maxBitrate = 200000; // Cap at 200kbps (sufficient for small grid video)
+                                    sender.setParameters(params).catch(e => console.log('Bitrate error:', e));
+                                }
+                            });
+                        } catch (e) {
+                            console.log("Error limiting bitrate", e);
+                        }
                     } else {
+                        // ... black silence fallback remains same
                         let blackSilence = (...args) => new MediaStream([black(...args), silence()]);
                         window.localStream = blackSilence();
                         connections[socketListId].addStream(window.localStream);
@@ -365,7 +455,20 @@ export default function VideoMeetComponent() {
 
                         try {
                             connections[id2].addStream(window.localStream);
-                        } catch (e) { }
+
+                            // OPTIMIZATION: Throttling for outgoing connections when WE join
+                            const senders = connections[id2].getSenders();
+                            senders.forEach((sender) => {
+                                if (sender.track && sender.track.kind === 'video') {
+                                    const params = sender.getParameters();
+                                    if (!params.encodings) params.encodings = [{}];
+                                    params.encodings[0].maxBitrate = 200000;
+                                    sender.setParameters(params).catch(e => console.log('Bitrate error:', e));
+                                }
+                            });
+                        } catch (e) {
+                            console.log(e);
+                        }
 
                         connections[id2].createOffer().then((description) => {
                             connections[id2].setLocalDescription(description)
@@ -379,9 +482,16 @@ export default function VideoMeetComponent() {
             });
         });
 
+
+
         socketRef.current.on('connect_error', () => {
             setIsConnecting(false);
             console.error('Connection failed');
+        });
+
+        socketRef.current.on('meeting-ended', () => {
+            alert("The host has ended the meeting.");
+            window.location.href = "/home";
         });
     }, []);
 
@@ -466,6 +576,13 @@ export default function VideoMeetComponent() {
         window.location.href = "/home";
     };
 
+    const handleEndMeetingForAll = () => {
+        if (socketRef.current && isHost) {
+            socketRef.current.emit('end-meeting', meetingCode);
+            handleEndCall();
+        }
+    };
+
     const sendMessage = () => {
         if (message.trim() && socketRef.current) {
             socketRef.current.emit('chat-message', message.trim(), username);
@@ -498,6 +615,100 @@ export default function VideoMeetComponent() {
         if (username.trim()) {
             setAskForUsername(false);
             getMedia();
+        }
+    };
+
+    // Video Recording Logic
+    const startRecording = async () => {
+        try {
+            const screenStream = await navigator.mediaDevices.getDisplayMedia({
+                video: { mediaSource: "screen" },
+                audio: true
+            });
+
+            // Try to get mic audio
+            let audioStream;
+            try {
+                audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            } catch (e) {
+                console.log("Mic permission denied or not available", e);
+            }
+
+            // Combine streams
+            const tracks = [
+                ...screenStream.getTracks(),
+                ...(audioStream ? audioStream.getAudioTracks() : [])
+            ];
+
+            const combinedStream = new MediaStream(tracks);
+
+            const mediaRecorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm; codecs=vp9' });
+
+            mediaRecorderRef.current = mediaRecorder;
+            recordedChunksRef.current = [];
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data && event.data.size > 0) {
+                    recordedChunksRef.current.push(event.data);
+                }
+            };
+
+            mediaRecorder.onstop = async () => {
+                const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
+                await uploadRecording(blob);
+
+                // Stop all tracks
+                combinedStream.getTracks().forEach(track => track.stop());
+                setIsRecording(false);
+            };
+
+            // Handle user clicking "Stop Sharing" native browser button
+            screenStream.getVideoTracks()[0].onended = () => {
+                if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+                    mediaRecorderRef.current.stop();
+                }
+            };
+
+            mediaRecorder.start(1000); // Collect 1s chunks
+            setIsRecording(true);
+
+        } catch (err) {
+            console.error("Error starting recording:", err);
+            alert("Failed to start recording. Please try again.");
+        }
+    };
+
+    const stopRecording = () => {
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+            mediaRecorderRef.current.stop();
+        }
+    };
+
+    const uploadRecording = async (blob) => {
+        setUploading(true);
+        setUploadProgress(0);
+
+        const formData = new FormData();
+        formData.append('video', blob, 'recording.webm');
+        formData.append('hostId', userData.username);
+        formData.append('meetingCode', meetingCode);
+
+        try {
+            await axios.post(`${server}/api/v1/recordings/upload`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                },
+                onUploadProgress: (progressEvent) => {
+                    const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                    setUploadProgress(percentCompleted);
+                }
+            });
+            alert("Recording saved to your profile!");
+        } catch (error) {
+            console.error("Upload failed", error);
+            alert("Failed to upload recording.");
+        } finally {
+            setUploading(false);
         }
     };
 
@@ -898,6 +1109,8 @@ export default function VideoMeetComponent() {
                         </div>
                     </div>
 
+
+
                     {/* Main Conference Grid */}
                     <div className={styles.conferenceView} data-grid={videos.length || 1}>
                         {videos.length === 0 ? (
@@ -1082,14 +1295,46 @@ export default function VideoMeetComponent() {
                         </Tooltip>
 
                         <div className={styles.endCallWrapper}>
-                            <Tooltip title="End call for everyone" arrow>
+                            {isHost && (
+                                <Tooltip title="End Meeting for All" arrow>
+                                    <Button
+                                        onClick={handleEndMeetingForAll}
+                                        variant="contained"
+                                        color="error"
+                                        sx={{ mr: 2, borderRadius: 10, px: 3, fontWeight: 'bold' }}
+                                    >
+                                        End Meeting
+                                    </Button>
+                                </Tooltip>
+                            )}
+
+                            {isHost && (
+                                <Tooltip title={isRecording ? "Stop Recording" : "Record Meeting"} arrow>
+                                    <IconButton
+                                        onClick={isRecording ? stopRecording : startRecording}
+                                        className={`${styles.controlButton} ${isRecording ? styles.recordingActive : ''}`}
+                                        sx={{
+                                            background: isRecording ? '#ef4444' : 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                                            animation: isRecording ? 'pulse 1.5s infinite' : 'none',
+                                            '&:hover': {
+                                                background: isRecording ? '#dc2626' : 'linear-gradient(135deg, #2563eb, #7c3aed)',
+                                                transform: 'scale(1.1)'
+                                            }
+                                        }}
+                                    >
+                                        <RecordIcon />
+                                    </IconButton>
+                                </Tooltip>
+                            )}
+
+                            <Tooltip title="Leave Meeting" arrow>
                                 <IconButton
                                     onClick={handleEndCall}
                                     className={styles.endCallButton}
                                     sx={{
-                                        background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+                                        background: isHost ? '#475569' : 'linear-gradient(135deg, #ef4444, #dc2626)',
                                         '&:hover': {
-                                            background: 'linear-gradient(135deg, #dc2626, #b91c1c)',
+                                            background: isHost ? '#64748b' : 'linear-gradient(135deg, #dc2626, #b91c1c)',
                                             transform: 'scale(1.1)'
                                         }
                                     }}
@@ -1100,7 +1345,26 @@ export default function VideoMeetComponent() {
                         </div>
                     </div>
                 </div>
-            )}
-        </div>
+            )
+            }
+
+            {/* Upload Progress Dialog */}
+            <Dialog open={uploading}>
+                <DialogTitle>Saving Recording...</DialogTitle>
+                <DialogContent sx={{ minWidth: '300px' }}>
+                    <Typography variant="body2" sx={{ mb: 2 }}>
+                        Please do not close this window. Uploading to secure storage.
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Box sx={{ width: '100%', mr: 1 }}>
+                            <LinearProgress variant="determinate" value={uploadProgress} />
+                        </Box>
+                        <Box sx={{ minWidth: 35 }}>
+                            <Typography variant="body2" color="text.secondary">{`${Math.round(uploadProgress)}%`}</Typography>
+                        </Box>
+                    </Box>
+                </DialogContent>
+            </Dialog>
+        </div >
     );
 }

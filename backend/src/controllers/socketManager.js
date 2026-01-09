@@ -1,4 +1,5 @@
 import { Server } from "socket.io"
+import { Meeting } from "../models/meeting.model.js"
 
 let connections = {}
 let messages = {}
@@ -39,9 +40,9 @@ export const connectToSocket = (server) => {
             }
 
         })
- 
-         // Handle signaling for WebRTC
-        
+
+        // Handle signaling for WebRTC
+
         socket.on("signal", (toId, message) => {
             io.to(toId).emit("signal", socket.id, message);
         })
@@ -76,7 +77,32 @@ export const connectToSocket = (server) => {
             }
 
         })
-     
+
+        // Handle End Meeting
+        socket.on("end-meeting", async (meetingCode) => {
+            try {
+                // Notify all users in the room
+                if (connections[meetingCode]) {
+                    connections[meetingCode].forEach(socketId => {
+                        io.to(socketId).emit("meeting-ended");
+                    });
+
+                    // Clear connections for this room
+                    delete connections[meetingCode];
+                    delete messages[meetingCode];
+                }
+
+                // Update DB
+                await Meeting.findOneAndUpdate(
+                    { meetingCode: meetingCode },
+                    { isEnded: true, endTime: new Date() }
+                );
+
+            } catch (e) {
+                console.error("Error ending meeting:", e);
+            }
+        })
+
         // Handle disconnection
 
         socket.on("disconnect", () => {

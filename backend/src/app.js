@@ -14,8 +14,8 @@ const app = express();
 const server = createServer(app);
 const io = connectToSocket(server);
 
-// Use the PORT from .env or default to 8080
-app.set("port", process.env.PORT || 8080);
+const port = process.env.PORT || 8080;
+app.set("port", port);
 
 app.use(cors({
     origin: [
@@ -90,8 +90,9 @@ const start = async () => {
             console.log('⚠️ Mongoose disconnected');
         });
 
-        server.listen(app.get("port"), () => {
-            console.log(`🚀 Server listening on port ${app.get("port")}`);
+        const port = app.get("port");
+        server.listen(port, () => {
+            console.log(`🚀 Server listening on port ${port}`);
         });
     } catch (error) {
         console.error("❌ Failed to connect to MongoDB:", error.message);

@@ -83,6 +83,7 @@ function HomeComponent() {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
+      console.log("Using Server URL:", server);
       await axios.post(`${server}/api/v1/meetings/start`, {
         meetingCode: newMeetingCode,
         password: newMeetingPassword,

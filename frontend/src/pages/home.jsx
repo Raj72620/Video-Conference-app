@@ -152,7 +152,10 @@ function HomeComponent() {
 
   const fetchRecordings = async () => {
     try {
-      const response = await axios.get(`${server}/api/v1/recordings/user`);
+      if (!userData?.username) return;
+      const response = await axios.get(`${server}/api/v1/recordings/user`, {
+        params: { username: userData.username }
+      });
       setRecordings(response.data);
     } catch (err) {
       console.error("Failed to fetch recordings", err);

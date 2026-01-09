@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback, useContext } from 'react';
+import { useParams } from 'react-router-dom';
 import io from "socket.io-client";
 import axios from 'axios';
 import {
@@ -53,6 +54,7 @@ const peerConfigConnections = {
 }
 
 export default function VideoMeetComponent() {
+    const { url: meetingCodeParam } = useParams();
     const socketRef = useRef();
     const socketIdRef = useRef();
     const localVideoref = useRef();
@@ -105,12 +107,22 @@ export default function VideoMeetComponent() {
 
     // Auto-start if username is set
     useEffect(() => {
-        const code = window.location.href.split("/").pop();
+        // Use meetingCodeParam if available, otherwise fallback (though useParams is preferred)
+        const code = meetingCodeParam || window.location.href.split("/").pop();
         setMeetingCode(code);
 
         const checkMeetingStatus = async () => {
             try {
                 const response = await axios.get(`${server}/api/v1/meetings/status/${code}`);
+
+                console.log("MEETING STATUS DEBUG:", {
+                    meetingCode: code,
+                    serverHostId: response.data.hostId,
+                    localUsername: userData?.username,
+                    userData: userData,
+                    isMatch: userData?.username && response.data.hostId === userData.username
+                });
+
                 if (response.data.isEnded) {
                     alert("This meeting has ended");
                     window.location.href = "/home";
@@ -119,6 +131,7 @@ export default function VideoMeetComponent() {
 
                 if (userData?.username && response.data.hostId === userData.username) {
                     setIsHost(true);
+                    console.log("You are the host!");
                 }
             } catch (err) {
                 console.error("Error fetching meeting status", err);
@@ -130,7 +143,7 @@ export default function VideoMeetComponent() {
         if (userData?.name && askForUsername === false) {
             getMedia();
         }
-    }, [askForUsername, userData]);
+    }, [askForUsername, userData, meetingCodeParam]);
 
     // Initialize self-view position on window resize
     useEffect(() => {

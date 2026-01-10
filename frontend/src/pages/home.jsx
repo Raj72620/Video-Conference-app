@@ -33,7 +33,6 @@ import {
   Home as HomeIcon,
   Help as HelpIcon,
   PlayArrow as PlayArrowIcon,
-  PlayArrow as PlayArrowIcon,
   ContentCopy as ContentCopyIcon,
   Download as DownloadIcon
 } from '@mui/icons-material';

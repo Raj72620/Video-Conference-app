@@ -655,7 +655,25 @@ export default function VideoMeetComponent() {
 
             const combinedStream = new MediaStream(tracks);
 
-            const mediaRecorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm; codecs=vp9' });
+            // Determine supported MIME type
+            const mimeTypes = [
+                'video/webm; codecs=vp9',
+                'video/webm; codecs=vp8',
+                'video/webm',
+                'video/mp4'
+            ];
+
+            let selectedMimeType = mimeTypes.find(type => MediaRecorder.isTypeSupported(type));
+
+            if (!selectedMimeType) {
+                console.warn("No preferred MIME type supported, letting browser choose default.");
+                selectedMimeType = ''; // Let browser choose default
+            }
+
+            console.log("Using MIME Type:", selectedMimeType);
+
+            const options = selectedMimeType ? { mimeType: selectedMimeType } : undefined;
+            const mediaRecorder = new MediaRecorder(combinedStream, options);
 
             mediaRecorderRef.current = mediaRecorder;
             recordedChunksRef.current = [];
@@ -667,7 +685,8 @@ export default function VideoMeetComponent() {
             };
 
             mediaRecorder.onstop = async () => {
-                const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
+                // created blob based on the mime type used
+                const blob = new Blob(recordedChunksRef.current, { type: selectedMimeType || 'video/webm' });
                 await uploadRecording(blob);
 
                 // Stop all tracks
@@ -687,7 +706,7 @@ export default function VideoMeetComponent() {
 
         } catch (err) {
             console.error("Error starting recording:", err);
-            alert("Failed to start recording. Please try again.");
+            alert("Failed to start recording. Please try again. Error: " + err.message);
         }
     };
 

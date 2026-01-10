@@ -33,7 +33,9 @@ import {
   Home as HomeIcon,
   Help as HelpIcon,
   PlayArrow as PlayArrowIcon,
-  ContentCopy as ContentCopyIcon
+  PlayArrow as PlayArrowIcon,
+  ContentCopy as ContentCopyIcon,
+  Download as DownloadIcon
 } from '@mui/icons-material';
 
 import { AuthContext } from '../contexts/AuthContext';
@@ -442,18 +444,31 @@ function HomeComponent() {
                       {/* Video Player Preview */}
                       <Box sx={{ bgcolor: '#000', borderRadius: 1, overflow: 'hidden', mb: 1, position: 'relative' }}>
                         <video
-                          src={`${server}/${rec.videoUrl.replace('backend/public/', '')}`}
+                          src={`${server}${rec.videoUrl.replace(/^(backend\/public\/|public\/)/, '').startsWith('/') ? '' : '/'}${rec.videoUrl.replace(/^(backend\/public\/|public\/)/, '')}`}
                           controls
                           style={{ width: '100%', maxHeight: '150px' }}
+                          onError={(e) => console.error("Video playback error", e)}
                         />
                       </Box>
 
                       <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
                         <Button
                           size="small"
+                          startIcon={<DownloadIcon />}
+                          href={`${server}${rec.videoUrl.replace(/^(backend\/public\/|public\/)/, '').startsWith('/') ? '' : '/'}${rec.videoUrl.replace(/^(backend\/public\/|public\/)/, '')}`}
+                          download
+                          target="_blank"
+                          sx={{ color: '#4caf50', borderColor: '#4caf50' }}
+                          variant="outlined"
+                        >
+                          Download
+                        </Button>
+                        <Button
+                          size="small"
                           startIcon={<ContentCopyIcon />}
                           onClick={() => {
-                            navigator.clipboard.writeText(`${server}/${rec.videoUrl.replace('backend/public/', '')}`);
+                            const url = `${server}${rec.videoUrl.replace(/^(backend\/public\/|public\/)/, '').startsWith('/') ? '' : '/'}${rec.videoUrl.replace(/^(backend\/public\/|public\/)/, '')}`;
+                            navigator.clipboard.writeText(url);
                             alert("Link copied to clipboard!");
                           }}
                           sx={{ color: '#8b5cf6', borderColor: '#8b5cf6' }}

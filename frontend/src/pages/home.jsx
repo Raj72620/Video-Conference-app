@@ -91,7 +91,7 @@ function HomeComponent() {
         token: token
       });
 
-      await addToUserHistory(newMeetingCode);
+      // Meeting is automatically added to history by the backend
       navigate(`/${newMeetingCode}`);
     } catch (err) {
       console.error("Create meeting error:", err);

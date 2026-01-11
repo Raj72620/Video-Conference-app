@@ -38,7 +38,8 @@ import {
     Close as CloseIcon,
     Send as SendIcon,
     ExpandLess as ExpandLessIcon,
-    FiberManualRecord as RecordIcon
+    FiberManualRecord as RecordIcon,
+    PowerSettingsNew as PowerIcon
 } from '@mui/icons-material';
 import styles from "../styles/videoComponent.module.css";
 import server from '../environment';
@@ -1329,14 +1330,34 @@ export default function VideoMeetComponent() {
                         <div className={styles.endCallWrapper}>
                             {isHost && (
                                 <Tooltip title="End Meeting for All" arrow>
-                                    <Button
-                                        onClick={handleEndMeetingForAll}
-                                        variant="contained"
-                                        color="error"
-                                        sx={{ mr: 2, borderRadius: 10, px: 3, fontWeight: 'bold' }}
-                                    >
-                                        End Meeting
-                                    </Button>
+                                    <Box>
+                                        <Button
+                                            onClick={handleEndMeetingForAll}
+                                            variant="contained"
+                                            color="error"
+                                            sx={{
+                                                mr: 2,
+                                                borderRadius: 10,
+                                                px: 3,
+                                                fontWeight: 'bold',
+                                                display: { xs: 'none', sm: 'flex' }
+                                            }}
+                                        >
+                                            End Meeting
+                                        </Button>
+                                        <IconButton
+                                            onClick={handleEndMeetingForAll}
+                                            className={styles.controlButton}
+                                            sx={{
+                                                background: '#ef4444',
+                                                '&:hover': { background: '#dc2626' },
+                                                display: { xs: 'flex', sm: 'none' },
+                                                mr: 1
+                                            }}
+                                        >
+                                            <PowerIcon />
+                                        </IconButton>
+                                    </Box>
                                 </Tooltip>
                             )}
 

@@ -291,18 +291,67 @@
     .actionCards {
         flex-direction: column;
         align-items: center;
+        gap: 20px;
     }
 
     .timeDisplay {
-        font-size: 4rem;
+        font-size: 3.5rem;
     }
 
     .navbar {
-        padding: 0 20px;
+        padding: 0 16px;
+        height: 64px;
+    }
+
+    .logo span {
+        display: none;
     }
 
     .navLinks {
-        display: none;
-        /* Simplify for mobile for now or sidebar */
+        display: flex;
+        gap: 20px;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: rgba(10, 10, 10, 0.95);
+        backdrop-filter: blur(20px);
+        padding: 12px 0;
+        justify-content: center;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        z-index: 90;
+    }
+
+    .navItem {
+        flex-direction: column;
+        gap: 4px;
+        font-size: 10px;
+    }
+
+    .mainContent {
+        padding: 80px 16px 100px;
+        /* Added bottom padding for bottom nav */
+    }
+
+    .card {
+        padding: 24px;
+    }
+
+    .clockSection {
+        margin-bottom: 40px;
+    }
+}
+
+@media (max-width: 480px) {
+    .timeDisplay {
+        font-size: 3rem;
+    }
+
+    .cardTitle {
+        font-size: 20px;
+    }
+
+    .cardDesc {
+        font-size: 13px;
     }
 }

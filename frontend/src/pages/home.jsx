@@ -229,13 +229,13 @@ function HomeComponent() {
 
         <div className={styles.navLinks}>
           <div className={`${styles.navItem} ${styles.active}`}>
-            <HomeIcon fontSize="small" /> Home
+            <HomeIcon fontSize="small" /> <span>Home</span>
           </div>
           <div className={styles.navItem} onClick={handleHistoryOpen}>
-            <HistoryIcon fontSize="small" /> History
+            <HistoryIcon fontSize="small" /> <span>History</span>
           </div>
           <div className={styles.navItem} onClick={() => alert("Help Center coming soon")}>
-            <HelpIcon fontSize="small" /> Help
+            <HelpIcon fontSize="small" /> <span>Help</span>
           </div>
         </div>
 

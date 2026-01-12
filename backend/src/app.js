@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-dotenv.config();  // This should be at the VERY TOP before any other imports
+dotenv.config();
 
 import express from "express";
 import { createServer } from "node:http";

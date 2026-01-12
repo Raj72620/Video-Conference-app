@@ -4,6 +4,8 @@ import { Meeting } from "../models/meeting.model.js"
 let connections = {}
 let messages = {}
 let timeOnline = {}
+let users = {}
+let bannedUsers = {}
 
 export const connectToSocket = (server) => {
     const io = new Server(server, {
@@ -16,20 +18,30 @@ export const connectToSocket = (server) => {
     });
     io.on("connection", (socket) => {
         console.log("SOMETHING CONNECTED")
-        socket.on("join-call", (path) => {
+        socket.on("join-call", (path, username) => {
+
+            // Check if user is banned
+            if (bannedUsers[path] && bannedUsers[path].has(username)) {
+                socket.emit("user-banned");
+                return;
+            }
 
             if (connections[path] === undefined) {
                 connections[path] = []
             }
             connections[path].push(socket.id)
+            users[socket.id] = username
 
             timeOnline[socket.id] = new Date();
 
-            // connections[path].forEach(elem => {
-            //     io.to(elem)
-            // })
+            // Collect all users in this room to send names
+            const roomUsers = connections[path].map(id => ({
+                socketId: id,
+                username: users[id] || 'Guest'
+            }));
+
             for (let a = 0; a < connections[path].length; a++) {
-                io.to(connections[path][a]).emit("user-joined", socket.id, connections[path])
+                io.to(connections[path][a]).emit("user-joined", socket.id, connections[path], roomUsers)
             }
 
             if (messages[path] !== undefined) {
@@ -78,6 +90,68 @@ export const connectToSocket = (server) => {
 
         })
 
+        // Handle Hand Raise
+        socket.on("toggle-hand", (isRaised, meetingCode) => {
+            if (connections[meetingCode]) {
+                connections[meetingCode].forEach(socketId => {
+                    if (socketId !== socket.id) {
+                        io.to(socketId).emit("hand-update", socket.id, isRaised);
+                    }
+                });
+            }
+        });
+
+        // Handle Reactions
+        socket.on("send-reaction", (emoji, meetingCode) => {
+            if (connections[meetingCode]) {
+                connections[meetingCode].forEach(socketId => {
+                    io.to(socketId).emit("reaction-update", socket.id, emoji);
+                });
+            }
+        });
+
+        // Handle Kick User
+        socket.on("kick-user", (targetSocketId, meetingCode) => {
+            const targetUsername = users[targetSocketId];
+
+            // Add to banned list
+            if (!bannedUsers[meetingCode]) {
+                bannedUsers[meetingCode] = new Set();
+            }
+            if (targetUsername) {
+                bannedUsers[meetingCode].add(targetUsername);
+            }
+
+            // Notify target
+            io.to(targetSocketId).emit("kicked");
+
+            // Allow disconnection cleanup to handle the rest (user-left) 
+            // but force disconnect/cleanup from connections immediately to prevent lag
+            // Actually, best to let client disconnect, but if they are malicious they might stay.
+            // We should force remove.
+
+            if (connections[meetingCode]) {
+                // Notify others immediately
+                connections[meetingCode].forEach(elem => {
+                    if (elem !== targetSocketId) {
+                        io.to(elem).emit('user-left', targetSocketId, targetUsername);
+                    }
+                });
+
+                // Remove from connections array manually to ensure strict removal
+                const index = connections[meetingCode].indexOf(targetSocketId);
+                if (index !== -1) {
+                    connections[meetingCode].splice(index, 1);
+                }
+            }
+
+            // Force disconnect logic
+            const targetSocket = io.sockets.sockets.get(targetSocketId);
+            if (targetSocket) {
+                targetSocket.disconnect(true);
+            }
+        });
+
         // Handle End Meeting
         socket.on("end-meeting", async (meetingCode) => {
             try {
@@ -90,6 +164,7 @@ export const connectToSocket = (server) => {
                     // Clear connections for this room
                     delete connections[meetingCode];
                     delete messages[meetingCode];
+                    if (bannedUsers[meetingCode]) delete bannedUsers[meetingCode];
                 }
 
                 // Update DB
@@ -117,8 +192,11 @@ export const connectToSocket = (server) => {
                     if (v[a] === socket.id) {
                         key = k
 
+                        const leaverName = users[socket.id];
+                        delete users[socket.id];
+
                         for (let a = 0; a < connections[key].length; ++a) {
-                            io.to(connections[key][a]).emit('user-left', socket.id)
+                            io.to(connections[key][a]).emit('user-left', socket.id, leaverName)
                         }
 
                         var index = connections[key].indexOf(socket.id)

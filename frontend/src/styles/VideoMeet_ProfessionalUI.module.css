@@ -1,0 +1,266 @@
+.conferenceView {
+    flex: 1;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 100%;
+}
+
+.conferenceViewShifted {
+    width: calc(100% - 380px);
+    padding-right: 24px;
+}
+
+.conferenceView[data-grid="1"] {
+    display: flex;
+}
+
+.conferenceView[data-grid="1"] .remoteVideoContainer {
+    max-width: 1200px;
+    max-height: 85vh;
+    aspect-ratio: 16/9;
+}
+
+.conferenceView[data-grid]:not([data-grid="1"]) {
+    display: grid;
+    gap: 24px;
+    width: 100%;
+    max-width: 1600px;
+    margin: 0 auto;
+    height: 100%;
+    max-height: 90vh;
+}
+
+.conferenceView[data-grid="2"] {
+    grid-template-columns: repeat(2, 1fr);
+    align-content: center;
+}
+
+.conferenceView[data-grid="3"],
+.conferenceView[data-grid="4"] {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    align-content: center;
+}
+
+.conferenceView[data-grid="5"],
+.conferenceView[data-grid="6"] {
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    align-content: center;
+}
+
+.remoteVideoContainer {
+    width: 100%;
+    height: 100%;
+    background: #1e293b;
+    border-radius: 24px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.remoteVideoContainer:hover {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.remoteVideo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: #0f172a;
+}
+
+.userNameTag {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    color: white;
+    padding: 6px 16px;
+    border-radius: 99px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.floatingControls {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 12px;
+    padding: 12px 24px;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 999px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    transition: all 0.3s ease;
+}
+
+.controlButton {
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: 50% !important;
+    background: transparent !important;
+    color: #cbd5e1 !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.controlButtonOff {
+    background: rgba(239, 68, 68, 0.15) !important;
+    color: #ef4444 !important;
+}
+
+.controlButtonActive {
+    color: #10b981 !important;
+    background: rgba(16, 185, 129, 0.15) !important;
+}
+
+.endCallWrapper {
+    display: flex;
+    align-items: center;
+    margin-left: 12px;
+    padding-left: 12px;
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.endCallButton {
+    width: 64px !important;
+    height: 44px !important;
+    border-radius: 99px !important;
+    background: #ef4444 !important;
+    color: white !important;
+}
+
+.draggableSelfView {
+    position: fixed;
+    width: 240px;
+    height: 160px;
+    background: #0f172a;
+    border-radius: 16px;
+    overflow: hidden;
+    z-index: 1000;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.selfVideo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1);
+}
+
+.dragHandle {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 32px;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    cursor: move;
+    z-index: 20;
+}
+
+.dragIcon {
+    color: white;
+    font-size: 16px;
+    margin-right: 8px;
+}
+
+.selfViewLabel {
+    color: white;
+    font-size: 10px;
+}
+
+.videoOffIndicator,
+.audioOffIndicator {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: rgba(255, 255, 255, 0.5);
+    z-index: 15;
+}
+
+.floatingReaction {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 4rem;
+    animation: floatUp 2s ease-out forwards;
+    z-index: 50;
+    pointer-events: none;
+}
+
+@keyframes floatUp {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, 0) scale(0.5);
+    }
+
+    20% {
+        opacity: 1;
+        transform: translate(-50%, -40px) scale(1.2);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -200px) scale(1);
+    }
+}
+
+.waitingContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 0.8;
+    }
+
+    50% {
+        transform: scale(1.05);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 0.8;
+    }
+}
+
+@media (max-width: 768px) {
+    .conferenceView {
+        padding: 16px;
+        padding-bottom: 100px;
+    }
+
+    .draggableSelfView {
+        width: 120px;
+        height: 80px;
+    }
+}

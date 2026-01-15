@@ -9,7 +9,8 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Typography from '@mui/material/Typography';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { AuthContext } from '../contexts/AuthContext';
-import { Snackbar, CircularProgress, Alert } from '@mui/material';
+import { Snackbar, CircularProgress, Alert, InputAdornment, IconButton } from '@mui/material';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 import CssBaseline from '@mui/material/CssBaseline';
 
 const defaultTheme = createTheme({
@@ -32,6 +33,8 @@ const defaultTheme = createTheme({
 export default function Authentication() {
     const [username, setUsername] = React.useState("");
     const [password, setPassword] = React.useState("");
+    const [confirmPassword, setConfirmPassword] = React.useState("");
+    const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
     const [name, setName] = React.useState("");
     const [error, setError] = React.useState("");
     const [message, setMessage] = React.useState("");
@@ -52,9 +55,19 @@ export default function Authentication() {
                 return;
             }
 
-            if (formState === 1 && !name.trim()) {
-                setError("Please enter your name");
-                return;
+            if (formState === 1) {
+                if (!name.trim()) {
+                    setError("Please enter your name");
+                    return;
+                }
+                if (!confirmPassword.trim()) {
+                    setError("Please confirm your password");
+                    return;
+                }
+                if (password !== confirmPassword) {
+                    setError("Passwords do not match");
+                    return;
+                }
             }
 
             if (password.length < 6) {
@@ -74,6 +87,7 @@ export default function Authentication() {
                 setName("");
                 setUsername("");
                 setPassword("");
+                setConfirmPassword("");
             }
         } catch (err) {
             console.error("Auth error:", err);
@@ -113,6 +127,8 @@ export default function Authentication() {
             handleAuth();
         }
     }
+
+    const handleClickShowConfirmPassword = () => setShowConfirmPassword((show) => !show);
 
     return (
         <ThemeProvider theme={defaultTheme}>
@@ -232,6 +248,35 @@ export default function Authentication() {
                                     id="password"
                                     sx={{ mb: 2 }}
                                 />
+
+                                {formState === 1 && (
+                                    <TextField
+                                        margin="normal"
+                                        required
+                                        fullWidth
+                                        name="confirmPassword"
+                                        label="Confirm Password"
+                                        value={confirmPassword}
+                                        type={showConfirmPassword ? 'text' : 'password'}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                        onKeyPress={handleKeyPress}
+                                        id="confirmPassword"
+                                        sx={{ mb: 2 }}
+                                        InputProps={{
+                                            endAdornment: (
+                                                <InputAdornment position="end">
+                                                    <IconButton
+                                                        aria-label="toggle password visibility"
+                                                        onClick={handleClickShowConfirmPassword}
+                                                        edge="end"
+                                                    >
+                                                        {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                                                    </IconButton>
+                                                </InputAdornment>
+                                            ),
+                                        }}
+                                    />
+                                )}
 
                                 {error && (
                                     <Alert severity="error" sx={{ mt: 1, mb: 2 }}>

@@ -57,6 +57,11 @@ export default function Authentication() {
                 return;
             }
 
+            if (password.length < 6) {
+                setError("Enter atleast 6 digit password");
+                return;
+            }
+
             if (formState === 0) {
                 // Login
                 await handleLogin(username, password);

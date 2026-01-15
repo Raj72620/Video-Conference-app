@@ -80,7 +80,15 @@ function HomeComponent() {
   }, []);
 
   const handleCreateMeeting = async () => {
-    if (!newMeetingCode.trim()) return;
+    if (!newMeetingCode.trim()) {
+      setError("Meeting code is required");
+      return;
+    }
+    if (!newMeetingPassword.trim()) {
+      setError("Password is required");
+      return;
+    }
+
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
@@ -305,7 +313,7 @@ function HomeComponent() {
             </p>
 
             <div className={styles.inputWrapper}>
-              <label className={styles.label}>Custom Code (Optional)</label>
+              <label className={styles.label}>Meeting Code</label>
               <input
                 className={styles.input}
                 value={newMeetingCode}
@@ -315,7 +323,7 @@ function HomeComponent() {
             </div>
 
             <div className={styles.inputWrapper}>
-              <label className={styles.label}>Password (Optional)</label>
+              <label className={styles.label}>Password</label>
               <input
                 type="password"
                 className={styles.input}

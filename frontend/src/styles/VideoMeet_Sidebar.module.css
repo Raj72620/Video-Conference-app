@@ -1,19 +1,20 @@
+/* Main Container */
 .chatRoom {
     position: fixed;
     top: 24px;
     right: 24px;
     bottom: 24px;
-    width: 380px;
-    background: rgba(15, 23, 42, 0.85);
+    width: 340px;
+    background: rgba(15, 23, 42, 0.95);
     backdrop-filter: blur(24px) saturate(180%);
     border-radius: 24px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
     flex-direction: column;
-    transform: translateX(420px);
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateX(450px);
+    transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
     z-index: 1500;
-    box-shadow: -10px 0 40px rgba(0, 0, 0, 0.5);
+    box-shadow: -10px 0 50px rgba(0, 0, 0, 0.6);
     overflow: hidden;
 }
 
@@ -21,13 +22,20 @@
     transform: translateX(0);
 }
 
+.chatContainer {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* Header */
 .chatHeader {
-    padding: 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(0, 0, 0, 0.3);
 }
 
 .chatHeaderContent {
@@ -36,25 +44,47 @@
     gap: 12px;
 }
 
+/* Chat Messages Area */
 .chattingDisplay {
     flex: 1;
     overflow-y: auto;
     padding: 20px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 4px;
+    /* Tighter gap for message grouping appearance */
     scroll-behavior: smooth;
 }
 
-.messageBlock {
-    max-width: 85%;
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 4px;
-    animation: slideIn 0.3s ease-out;
+/* Custom Scrollbar */
+.chattingDisplay::-webkit-scrollbar {
+    width: 6px;
 }
 
-@keyframes slideIn {
+.chattingDisplay::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.chattingDisplay::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+}
+
+.chattingDisplay::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Message Rows */
+.messageBlock {
+    max-width: 80%;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 2px;
+    position: relative;
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
     from {
         opacity: 0;
         transform: translateY(10px);
@@ -76,68 +106,106 @@
     align-items: flex-start;
 }
 
+/* Message Bubbles */
 .messageBubble {
-    padding: 10px 16px;
-    border-radius: 18px;
-    font-size: 0.95rem;
+    padding: 8px 14px;
+    border-radius: 16px;
+    font-size: 0.92rem;
     line-height: 1.5;
     position: relative;
-    color: #e2e8f0;
+    word-wrap: break-word;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    min-width: 80px;
+    /* Ensure space for time */
 }
 
+/* Sender (User) Style */
 .messageBlock.self .messageBubble {
-    background: #3b82f6;
-    color: white;
-    border-bottom-right-radius: 4px;
+    background: #0084ff;
+    /* Requested Blue */
+    color: #ffffff;
+    border-bottom-right-radius: 2px;
 }
 
+/* Receiver (Others) Style */
 .messageBlock.others .messageBubble {
-    background: #334155;
-    border-bottom-left-radius: 4px;
+    background: #f0f0f0;
+    /* Requested Light Grey */
+    color: #1e1e1e;
+    /* Dark text for contrast */
+    border-bottom-left-radius: 2px;
+}
+
+/* Meta Data */
+.messageHeader {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+    margin-left: 2px;
 }
 
 .messageSender {
     font-size: 0.75rem;
     color: #94a3b8;
-    margin-bottom: 4px;
-    margin-left: 4px;
+    /* Light blue-grey for dark mode bg presence */
+    font-weight: 500;
+}
+
+.messageBlock.others .messageSender {
+    margin-left: 12px;
+    /* Align with bubble start */
 }
 
 .messageTime {
-    font-size: 0.7rem;
-    color: rgba(255, 255, 255, 0.5);
-    margin-top: 4px;
+    font-size: 0.65rem;
+    display: block;
+    margin-top: 2px;
+    opacity: 0.8;
     text-align: right;
 }
 
+.messageBlock.others .messageTime {
+    color: rgba(0, 0, 0, 0.5);
+    /* Darker timestamp for light bubble */
+}
+
+.messageBlock.self .messageTime {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Input Area */
 .chattingArea {
-    padding: 16px;
-    background: rgba(0, 0, 0, 0.3);
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 12px 16px;
+    background: #fff;
+    /* Light input area for contrast or dark depending on theme preference. Keeping User's dark theme logic for sidebar but input can be distinct. */
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
     gap: 10px;
-    align-items: center;
+    align-items: flex-end;
+    background: rgba(30, 41, 59, 1);
+    /* Solid dark sticky bottom */
 }
 
 .welcomeMessage {
-    margin-bottom: 12px;
+    align-self: center;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 4px 12px;
+    border-radius: 12px;
+    margin: 16px 0;
 }
 
 .emptyChat {
+    height: 100%;
     display: flex;
     flex-direction: column;
-    align-items: center;
     justify-content: center;
-    height: 100%;
-    opacity: 0.6;
+    align-items: center;
+    opacity: 0.5;
+    color: #cbd5e1;
 }
 
-@media (max-width: 1024px) {
-    .chatRoom {
-        width: 320px;
-    }
-}
-
+/* Mobile Responsive */
 @media (max-width: 768px) {
     .chatRoom {
         width: 100%;
@@ -151,4 +219,46 @@
     .chatRoom.active {
         transform: translateY(0);
     }
+}
+
+/* Participant List Styles */
+.participantItem {
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    margin-bottom: 8px;
+    transition: background 0.2s;
+}
+
+.participantItem:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.participantInfo {
+    flex: 1;
+    margin-left: 12px;
+}
+
+.participantName {
+    font-size: 0.9rem;
+    color: #fff;
+    font-weight: 500;
+}
+
+.participantRole {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    color: #f59e0b;
+    /* Amber for Host */
+    margin-top: 2px;
+}
+
+.participantActions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }

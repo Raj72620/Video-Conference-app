@@ -99,20 +99,20 @@
     left: 50%;
     transform: translateX(-50%);
     display: flex;
-    gap: 12px;
-    padding: 12px 24px;
-    background: rgba(15, 23, 42, 0.6);
+    gap: 8px;
+    padding: 10px 20px;
+    background: rgba(15, 23, 42, 0.75);
     backdrop-filter: blur(16px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 999px;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    z-index: 2000;
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.4);
+    z-index: 1250;
     transition: all 0.3s ease;
 }
 
 .controlButton {
-    width: 48px !important;
-    height: 48px !important;
+    width: 44px !important;
+    height: 44px !important;
     border-radius: 50% !important;
     background: transparent !important;
     color: #cbd5e1 !important;

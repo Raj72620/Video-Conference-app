@@ -810,6 +810,7 @@ export default function VideoMeetComponent() {
                         username={username}
                         isRecording={isRecording}
                         isConnecting={isConnecting}
+                        socketId={socketIdRef.current}
                     />
 
                     {/* Integrated Recording Manager */}

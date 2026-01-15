@@ -69,7 +69,8 @@ export default function VideoMeet_ProfessionalUI({
     hostId,
     username,
     isRecording,
-    isConnecting
+    isConnecting,
+    socketId
 }) {
     return (
         <>
@@ -194,6 +195,21 @@ export default function VideoMeet_ProfessionalUI({
                         You • {username}
                     </Typography>
                 </div>
+
+                {/* Self Hand Indicator */}
+                {handRaised && (
+                    <Box sx={{ position: 'absolute', top: 35, right: 10, zIndex: 30, bgcolor: 'rgba(0,0,0,0.6)', p: 0.5, borderRadius: '50%' }}>
+                        <HandIcon sx={{ color: '#fbbf24', fontSize: 20 }} />
+                    </Box>
+                )}
+
+                {/* Self Reaction Indicator */}
+                {activeReactions[socketId] && (
+                    <div className={styles.floatingReaction} style={{ zIndex: 100 }}>
+                        {activeReactions[socketId].emoji}
+                    </div>
+                )}
+
                 <video
                     ref={localVideoref}
                     autoPlay

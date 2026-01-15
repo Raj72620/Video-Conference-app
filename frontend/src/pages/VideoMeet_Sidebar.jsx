@@ -1,4 +1,5 @@
 import React from 'react';
+
 import {
     Box,
     Typography,
@@ -81,38 +82,36 @@ export default function VideoMeet_Sidebar({
                             </Typography>
                         </div>
 
-                        {messages.map((item) => (
-                            <div
-                                className={`${styles.messageBlock} ${item.isOwn ? styles.self : styles.others}`}
-                                key={item.id}
-                            >
-                                {!item.isOwn && (
-                                    <div className={styles.messageHeader}>
-                                        <Avatar
-                                            sx={{
-                                                width: 24,
-                                                height: 24,
-                                                bgcolor: item.isOwn ? '#8b5cf6' : '#3b82f6',
-                                                fontSize: '0.75rem'
-                                            }}
-                                        >
-                                            {item.sender.charAt(0).toUpperCase()}
-                                        </Avatar>
-                                        <Typography variant="caption" className={styles.messageSender}>
-                                            {item.sender}
+                        {messages.map((item) => {
+                            const isOwn = item.isOwn;
+                            return (
+                                <div
+                                    className={`${styles.messageBlock} ${isOwn ? styles.self : styles.others}`}
+                                    key={item.id}
+                                >
+                                    <div className={styles.messageBubble}>
+                                        {!isOwn && (
+                                            <div className={styles.messageSender}>
+                                                {item.sender}
+                                            </div>
+                                        )}
+
+                                        {/* Reply Preview (Optional Future) */}
+                                        {/* {item.replyTo && <div className={styles.replyPreview}>...</div>} */}
+
+                                        <Typography variant="body2" className={styles.messageContent} style={{ color: isOwn ? '#fff' : '#1e1e1e' }}>
+                                            {item.data}
                                         </Typography>
+
+                                        <div className={styles.messageTime}>
+                                            {formatTime(item.timestamp)}
+                                        </div>
                                     </div>
-                                )}
-                                <div className={styles.messageBubble}>
-                                    <Typography variant="body2" className={styles.messageContent}>
-                                        {item.data}
-                                    </Typography>
+
+                                    {/* Action Helper (Hover Context) - could go here */}
                                 </div>
-                                <Typography variant="caption" className={styles.messageTime}>
-                                    {formatTime(item.timestamp)}
-                                </Typography>
-                            </div>
-                        ))}
+                            );
+                        })}
 
                         {messages.length === 0 && (
                             <div className={styles.emptyChat}>
@@ -125,6 +124,11 @@ export default function VideoMeet_Sidebar({
                                 </Typography>
                             </div>
                         )}
+                        <div ref={el => {
+                            if (el && activeTab === 'chat') {
+                                el.scrollIntoView({ behavior: 'smooth' });
+                            }
+                        }} />
                     </div>
                 )}
 
@@ -133,35 +137,57 @@ export default function VideoMeet_Sidebar({
                     <div className={styles.chattingDisplay}>
                         {participants.map((p) => {
                             const isParticipantHost = p.username === hostId;
+                            const isMe = p.socketId === socketIdRef.current;
+
                             return (
-                                <Box key={p.socketId} sx={{ p: 1.5, display: 'flex', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                    <Avatar sx={{ bgcolor: isParticipantHost ? '#f59e0b' : '#3b82f6', width: 32, height: 32, mr: 1.5, fontSize: 14 }}>
+                                <div key={p.socketId} className={styles.participantItem}>
+                                    <Avatar
+                                        sx={{
+                                            bgcolor: isParticipantHost ? '#f59e0b' : '#3b82f6',
+                                            width: 36,
+                                            height: 36,
+                                            fontSize: 15,
+                                            fontWeight: 600
+                                        }}
+                                    >
                                         {p.username.charAt(0).toUpperCase()}
                                     </Avatar>
-                                    <Box sx={{ flex: 1 }}>
-                                        <Typography variant="body2" sx={{ color: '#fff', fontWeight: 500 }}>
-                                            {p.username} {p.socketId === socketIdRef.current && '(You)'}
-                                        </Typography>
-                                        <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5 }}>
-                                            {isParticipantHost && (
-                                                <Typography variant="caption" sx={{ color: '#f59e0b', display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                                    <StarIcon sx={{ fontSize: 12 }} /> Host
-                                                </Typography>
-                                            )}
-                                        </Box>
-                                    </Box>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        {raisedHands[p.socketId] && <HandIcon sx={{ color: '#fbbf24', fontSize: 20 }} />}
-                                        {isHost && p.socketId !== socketIdRef.current && (
+
+                                    <div className={styles.participantInfo}>
+                                        <div className={styles.participantName}>
+                                            {p.username} {isMe && '(You)'}
+                                        </div>
+                                        {isParticipantHost && (
+                                            <div className={styles.participantRole}>
+                                                <StarIcon sx={{ fontSize: 14 }} /> Host
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className={styles.participantActions}>
+                                        {raisedHands[p.socketId] && (
+                                            <Tooltip title="Raised Hand">
+                                                <HandIcon sx={{ color: '#fbbf24', fontSize: 20 }} />
+                                            </Tooltip>
+                                        )}
+                                        {isHost && !isMe && (
                                             <Tooltip title="Remove User">
-                                                <IconButton size="small" onClick={() => handleKickUser(p.socketId)} sx={{ color: '#ef4444' }}>
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={() => handleKickUser(p.socketId)}
+                                                    sx={{
+                                                        color: '#ef4444',
+                                                        bgcolor: 'rgba(239, 68, 68, 0.1)',
+                                                        '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.2)' }
+                                                    }}
+                                                >
                                                     <DeleteIcon fontSize="small" />
                                                 </IconButton>
                                             </Tooltip>
                                         )}
-                                    </Box>
-                                </Box>
-                            )
+                                    </div>
+                                </div>
+                            );
                         })}
                     </div>
                 )}
@@ -211,6 +237,8 @@ export default function VideoMeet_Sidebar({
                         </IconButton>
                     </div>
                 )}
+
+
             </div>
         </div>
     );

@@ -10,7 +10,8 @@ import {
   CircularProgress,
   Avatar,
   Divider,
-  Chip
+  Chip,
+  Alert
 } from '@mui/material';
 import {
   Home as HomeIcon,
@@ -18,7 +19,8 @@ import {
   Code as CodeIcon,
   Videocam as MeetingIcon,
   Delete as DeleteIcon,
-  Person as PersonIcon
+  Person as PersonIcon,
+  History as HistoryIcon
 } from '@mui/icons-material';
 import { AuthContext } from '../contexts/AuthContext';
 import { createTheme, ThemeProvider } from '@mui/material/styles';

@@ -17,7 +17,11 @@ import {
   Menu,
   MenuItem,
   Snackbar,
-  Alert
+  Alert,
+  Drawer,
+  Chip,
+  Card,
+  Divider
 } from '@mui/material';
 import {
   Videocam as MeetingIcon,
@@ -376,37 +380,156 @@ function HomeComponent() {
         </DialogContent>
       </Dialog>
 
-      {/* Reuse History & Profile Dialogs + Menu from previous state */}
-      <Dialog
+      {/* History Drawer */}
+      <Drawer
+        anchor="right"
         open={historyOpen}
         onClose={() => setHistoryOpen(false)}
-        PaperProps={{ style: { backgroundColor: '#1e1e1e', color: '#fff', borderRadius: '16px', border: '1px solid #333', minWidth: '400px', maxHeight: '600px' } }}
+        PaperProps={{
+          sx: {
+            width: { xs: '100%', sm: '450px' },
+            backgroundColor: '#0f1419', // Dark background matching modern dark mode
+            color: '#fff',
+            borderLeft: '1px solid #333'
+          }
+        }}
       >
-        <DialogTitle sx={{ borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          Meeting History
-          <IconButton onClick={() => setHistoryOpen(false)} sx={{ color: '#888' }}><CloseIcon /></IconButton>
-        </DialogTitle>
-        <DialogContent>
+        <Box sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <HistoryIcon sx={{ color: '#8b5cf6' }} />
+              <Typography variant="h5" fontWeight="bold">History</Typography>
+            </Box>
+            <IconButton onClick={() => setHistoryOpen(false)} sx={{ color: '#fff' }}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
+
           {history.length === 0 ? (
-            <Box sx={{ py: 4, textAlign: 'center', color: '#888' }}><HistoryIcon sx={{ fontSize: 48, mb: 2, opacity: 0.5 }} /><Typography>No meeting history found</Typography></Box>
+            <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#666' }}>
+              <HistoryIcon sx={{ fontSize: 60, mb: 2, opacity: 0.3 }} />
+              <Typography>No meeting history found</Typography>
+            </Box>
           ) : (
-            <Box sx={{ mt: 2 }}>
-              {history.slice().reverse().map((meeting) => (
-                <Box key={meeting._id} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2, mb: 1, bgcolor: 'rgba(255,255,255,0.05)', borderRadius: 2 }}>
-                  <Box>
-                    <Typography variant="body1" fontWeight="bold">{meeting.meetingCode}</Typography>
-                    <Typography variant="caption" color="#888">{formatDate(meeting.date)}</Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Button variant="outlined" size="small" onClick={() => { setHistoryOpen(false); navigate(`/${meeting.meetingCode}`); }} sx={{ borderRadius: 20, borderColor: '#444', color: '#fff' }}>Rejoin</Button>
-                    <IconButton size="small" onClick={async () => { try { await deleteMeeting(meeting._id); await handleHistoryOpen(); } catch (e) { console.log(e); } }} sx={{ ml: 1, color: '#e41e3f' }}><DeleteIcon fontSize="small" /></IconButton>
-                  </Box>
-                </Box>
-              ))}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto', pr: 1 }}>
+              {history.slice().reverse().map((meeting, index) => {
+                const isActive = !meeting.isEnded;
+                return (
+                  <Card
+                    key={index}
+                    sx={{
+                      backgroundColor: '#1e1e1e',
+                      color: '#fff',
+                      borderRadius: 3,
+                      border: '1px solid',
+                      borderColor: isActive ? 'rgba(76, 175, 80, 0.3)' : '#333',
+                      position: 'relative',
+                      overflow: 'visible',
+                      transition: 'transform 0.2s',
+                      '&:hover': { transform: 'scale(1.02)', borderColor: isActive ? '#4caf50' : '#555' }
+                    }}
+                  >
+                    {/* Active Indicator Strip */}
+                    <Box sx={{
+                      position: 'absolute',
+                      top: 15,
+                      right: 15,
+                      width: 10,
+                      height: 10,
+                      borderRadius: '50%',
+                      backgroundColor: isActive ? '#4caf50' : '#ef4444',
+                      boxShadow: isActive ? '0 0 10px #4caf50' : 'none'
+                    }} />
+
+                    <Box sx={{ p: 2 }}>
+                      {/* Host Info */}
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                        <Avatar sx={{ width: 32, height: 32, bgcolor: isActive ? '#2e7d32' : '#424242', fontSize: 14, mr: 1.5 }}>
+                          {meeting.hostName ? meeting.hostName.charAt(0).toUpperCase() : <PersonIcon fontSize="small" />}
+                        </Avatar>
+                        <Box>
+                          <Typography variant="caption" sx={{ color: '#888', display: 'block', lineHeight: 1 }}>HOST</Typography>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>{meeting.hostName || "Unknown"}</Typography>
+                        </Box>
+                      </Box>
+
+                      <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)', mb: 2 }} />
+
+                      {/* Code & Time */}
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                        <Box>
+                          <Typography variant="caption" color="#888">CODE</Typography>
+                          <Typography variant="body1" fontFamily="monospace" sx={{ letterSpacing: 1 }}>{meeting.meetingCode}</Typography>
+                        </Box>
+                        <Box sx={{ textAlign: 'right' }}>
+                          <Typography variant="caption" color="#888">DATE</Typography>
+                          <Typography variant="body2">{formatDate(meeting.date)}</Typography>
+                        </Box>
+                      </Box>
+
+                      {/* Status & Actions */}
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
+                        <Chip
+                          label={isActive ? "Active Now" : "Ended"}
+                          size="small"
+                          sx={{
+                            backgroundColor: isActive ? 'rgba(76, 175, 80, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                            color: isActive ? '#4caf50' : '#ef4444',
+                            fontWeight: 'bold',
+                            border: '1px solid',
+                            borderColor: isActive ? 'rgba(76, 175, 80, 0.2)' : 'rgba(239, 68, 68, 0.2)'
+                          }}
+                        />
+
+                        <Box>
+                          <IconButton
+                            size="small"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              if (window.confirm("Delete from history?")) {
+                                try {
+                                  await deleteMeeting(meeting._id);
+                                  await handleHistoryOpen(); // Refresh list
+                                } catch (err) {
+                                  console.error(err);
+                                }
+                              }
+                            }}
+                            sx={{ color: '#666', mr: 1, '&:hover': { color: '#ef4444' } }}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+
+                          <Button
+                            variant={isActive ? "contained" : "outlined"}
+                            size="small"
+                            onClick={() => {
+                              if (isActive) navigate(`/${meeting.meetingCode}`);
+                            }}
+                            disabled={!isActive}
+                            sx={{
+                              borderRadius: 20,
+                              textTransform: 'none',
+                              borderColor: '#444',
+                              backgroundColor: isActive ? '#2563eb' : 'transparent',
+                              color: isActive ? '#fff' : '#666',
+                              '&:hover': {
+                                backgroundColor: isActive ? '#1d4ed8' : 'rgba(255,255,255,0.05)'
+                              }
+                            }}
+                          >
+                            {isActive ? "Join" : "Closed"}
+                          </Button>
+                        </Box>
+                      </Box>
+                    </Box>
+                  </Card>
+                );
+              })}
             </Box>
           )}
-        </DialogContent>
-      </Dialog>
+        </Box>
+      </Drawer>
 
       <Dialog
         open={profileOpen}
@@ -426,6 +549,7 @@ function HomeComponent() {
               <Avatar sx={{ width: 80, height: 80, fontSize: '2rem', bgcolor: '#ff6b00', margin: '0 auto 16px' }}>{displayUser.name?.charAt(0).toUpperCase()}</Avatar>
               <Typography variant="h5" fontWeight="bold">{displayUser.name}</Typography>
               <Typography variant="body1" color="#888" sx={{ mb: 3 }}>{displayUser.email}</Typography>
+              <Button variant="outlined" startIcon={<HistoryIcon />} onClick={() => { setProfileOpen(false); handleHistoryOpen(); }} fullWidth sx={{ borderRadius: 2, mb: 2, borderColor: '#8b5cf6', color: '#8b5cf6' }}>View Meeting History</Button>
               <Button variant="outlined" color="error" startIcon={<LogoutIcon />} onClick={logout} fullWidth sx={{ borderRadius: 2 }}>Sign Out</Button>
             </Box>
 
@@ -509,6 +633,7 @@ function HomeComponent() {
         PaperProps={{ style: { backgroundColor: '#1e1e1e', color: '#fff', border: '1px solid #333' } }}
       >
         <MenuItem onClick={() => { setAnchorEl(null); setProfileOpen(true); }}><PersonIcon fontSize="small" sx={{ mr: 1 }} /> Profile</MenuItem>
+
         <MenuItem onClick={() => { setAnchorEl(null); alert("Settings coming soon!"); }}><SettingsIcon fontSize="small" sx={{ mr: 1 }} /> Settings</MenuItem>
         <MenuItem onClick={logout} sx={{ color: '#ff4444' }}><LogoutIcon fontSize="small" sx={{ mr: 1 }} /> Logout</MenuItem>
       </Menu>

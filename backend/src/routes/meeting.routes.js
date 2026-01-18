@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { startMeeting, validateMeeting, checkMeetingStatus } from "../controllers/meeting.controller.js";
+import { startMeeting, validateMeeting, checkMeetingStatus, endMeeting } from "../controllers/meeting.controller.js";
 
 const router = Router();
 

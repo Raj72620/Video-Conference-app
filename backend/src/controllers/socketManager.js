@@ -153,23 +153,27 @@ export const connectToSocket = (server) => {
         });
 
         // Handle End Meeting
-        socket.on("end-meeting", async (meetingCode) => {
+        socket.on("end-meeting", async (roomKey, meetingCodeInput) => {
             try {
+                // If meetingCodeInput is provided, use it. Otherwise fall back to roomKey
+                // (though roomKey might be a URL, which won't match DB if DB stores short codes)
+                const dbMeetingCode = meetingCodeInput || roomKey;
+
                 // Notify all users in the room
-                if (connections[meetingCode]) {
-                    connections[meetingCode].forEach(socketId => {
+                if (connections[roomKey]) {
+                    connections[roomKey].forEach(socketId => {
                         io.to(socketId).emit("meeting-ended");
                     });
 
                     // Clear connections for this room
-                    delete connections[meetingCode];
-                    delete messages[meetingCode];
-                    if (bannedUsers[meetingCode]) delete bannedUsers[meetingCode];
+                    delete connections[roomKey];
+                    delete messages[roomKey];
+                    if (bannedUsers[roomKey]) delete bannedUsers[roomKey];
                 }
 
                 // Update DB
                 await Meeting.findOneAndUpdate(
-                    { meetingCode: meetingCode },
+                    { meetingCode: dbMeetingCode },
                     { isEnded: true, endTime: new Date() }
                 );
 

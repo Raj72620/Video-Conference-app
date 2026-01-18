@@ -574,7 +574,7 @@ export default function VideoMeetComponent() {
             } catch (err) {
                 console.error("Failed to mark meeting as ended", err);
             }
-            socketRef.current.emit('end-meeting', window.location.href);
+            socketRef.current.emit('end-meeting', window.location.href, meetingCode);
             handleEndCall();
         }
     };

@@ -153,11 +153,13 @@ export const connectToSocket = (server) => {
         });
 
         // Handle End Meeting
-        socket.on("end-meeting", async (roomKey, meetingCodeInput) => {
+        // Handle End Meeting
+        socket.on("end-meeting", async (roomKey, meetingCodeInput, callback) => {
             try {
-                // If meetingCodeInput is provided, use it. Otherwise fall back to roomKey
-                // (though roomKey might be a URL, which won't match DB if DB stores short codes)
+                // Determine the DB meeting code (prefer explicit input, fallback to roomKey)
                 const dbMeetingCode = meetingCodeInput || roomKey;
+
+                console.log(`Ending meeting: Room=${roomKey}, Code=${dbMeetingCode}`);
 
                 // Notify all users in the room
                 if (connections[roomKey]) {
@@ -165,7 +167,7 @@ export const connectToSocket = (server) => {
                         io.to(socketId).emit("meeting-ended");
                     });
 
-                    // Clear connections for this room
+                    // Clear connections specifically for this room
                     delete connections[roomKey];
                     delete messages[roomKey];
                     if (bannedUsers[roomKey]) delete bannedUsers[roomKey];
@@ -177,8 +179,12 @@ export const connectToSocket = (server) => {
                     { isEnded: true, endTime: new Date() }
                 );
 
+                // Acknowledge completion if callback provided
+                if (typeof callback === 'function') callback();
+
             } catch (e) {
                 console.error("Error ending meeting:", e);
+                if (typeof callback === 'function') callback({ error: e.message });
             }
         })
 

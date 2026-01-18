@@ -107,7 +107,7 @@ export default function VideoMeetComponent() {
 
     // Auto-start if username is set
     useEffect(() => {
-        const code = meetingCodeParam || window.location.href.split("/").pop();
+        const code = (meetingCodeParam || window.location.href.split("/").pop()).toUpperCase();
         setMeetingCode(code);
 
         const checkMeetingStatus = async () => {
@@ -370,7 +370,7 @@ export default function VideoMeetComponent() {
 
         socketRef.current.on('connect', () => {
             setIsConnecting(false);
-            socketRef.current.emit('join-call', window.location.href, username);
+            socketRef.current.emit('join-call', meetingCode, username);
             socketIdRef.current = socketRef.current.id;
 
             socketRef.current.on('chat-message', (data, sender, socketIdSender) => {
@@ -499,7 +499,7 @@ export default function VideoMeetComponent() {
             alert("The host has ended the meeting.");
             window.location.href = "/home";
         });
-    }, [username, videos]);
+    }, [username, videos, meetingCode]);
 
     const gotMessageFromServer = useCallback((fromId, message) => {
         var signal = JSON.parse(message);
@@ -574,8 +574,14 @@ export default function VideoMeetComponent() {
             } catch (err) {
                 console.error("Failed to mark meeting as ended", err);
             }
-            socketRef.current.emit('end-meeting', window.location.href, meetingCode);
-            handleEndCall();
+            // Use callback to ensure server processes the end event before we disconnect
+            socketRef.current.emit('end-meeting', meetingCode, meetingCode, () => {
+                handleEndCall();
+            });
+            // Fallback timeout in case server doesn't respond
+            setTimeout(() => {
+                if (window.location.pathname !== "/home") handleEndCall();
+            }, 2000);
         }
     };
 
@@ -589,13 +595,13 @@ export default function VideoMeetComponent() {
     const handleHandToggle = () => {
         const newState = !handRaised;
         setHandRaised(newState);
-        socketRef.current.emit('toggle-hand', newState, window.location.href);
+        socketRef.current.emit('toggle-hand', newState, meetingCode);
         setRaisedHands(prev => ({ ...prev, [socketIdRef.current]: newState }));
     };
 
     const handleReaction = (emoji) => {
         setReactionAnchorEl(null);
-        socketRef.current.emit('send-reaction', emoji, window.location.href);
+        socketRef.current.emit('send-reaction', emoji, meetingCode);
         const myId = socketIdRef.current;
         setActiveReactions(prev => ({ ...prev, [myId]: { emoji, id: Date.now() } }));
         setTimeout(() => {
@@ -609,7 +615,7 @@ export default function VideoMeetComponent() {
 
     const handleKickUser = (socketId) => {
         if (window.confirm("Are you sure you want to remove this user?")) {
-            socketRef.current.emit('kick-user', socketId, window.location.href);
+            socketRef.current.emit('kick-user', socketId, meetingCode);
         }
     };
 

@@ -91,6 +91,8 @@ const getUserHistory = async (req, res) => {
         const enhancedMeetings = await Promise.all(meetings.map(async (historyEntry) => {
             try {
                 // Determine if this history entry IS the master entry
+                const currentCode = historyEntry.meetingCode;
+
                 if (historyEntry.host_id) {
                     return {
                         ...historyEntry.toObject(),
@@ -99,13 +101,12 @@ const getUserHistory = async (req, res) => {
                     };
                 }
 
-                // If not, find the master meeting for this code
-                // Use regex for case-insensitive matching to ensure we find the master even if casing differs
-                const escapedCode = historyEntry.meetingCode.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                // Find the master meeting (created by host)
+                // We use a case-insensitive exact match safely
                 const masterMeeting = await Meeting.findOne({
-                    meetingCode: { $regex: new RegExp(`^${escapedCode}$`, 'i') },
+                    meetingCode: { $regex: `^${currentCode}$`, $options: 'i' },
                     host_id: { $exists: true }
-                }).sort({ date: -1 }); // Get latest if duplicates exist
+                }).sort({ date: -1 });
 
                 if (masterMeeting) {
                     return {
@@ -117,15 +118,13 @@ const getUserHistory = async (req, res) => {
                     };
                 }
 
-                // If master meeting not found, return safe default
                 return {
                     ...historyEntry.toObject(),
                     hostName: "Unknown",
-                    isEnded: true // Default to ended if master not found to avoid "Active" ghosts
+                    isEnded: true // accurate fallback
                 };
             } catch (err) {
                 console.error("Error processing history entry:", err);
-                // Return safe default object on error
                 return {
                     ...historyEntry.toObject(),
                     hostName: "Unknown",

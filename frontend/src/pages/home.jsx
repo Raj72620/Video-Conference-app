@@ -115,7 +115,7 @@ function HomeComponent() {
 
   const handleJoinClick = async () => {
     // Clean code (remove URL part if pasted)
-    const cleanCode = joinCode.split('/').pop();
+    const cleanCode = joinCode.split('/').pop().toUpperCase();
 
     if (!cleanCode.trim()) {
       setError("Please enter a meeting code");

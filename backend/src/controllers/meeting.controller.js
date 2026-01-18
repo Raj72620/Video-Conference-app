@@ -81,4 +81,36 @@ const checkMeetingStatus = async (req, res) => {
     }
 }
 
-export { startMeeting, validateMeeting, checkMeetingStatus };
+const endMeeting = async (req, res) => {
+    const { meetingCode, token } = req.body;
+
+    try {
+        const user = await User.findOne({ token: token });
+        if (!user) {
+            return res.status(httpStatus.UNAUTHORIZED).json({ message: "Invalid token" });
+        }
+
+        const meeting = await Meeting.findOne({ meetingCode, isEnded: false });
+
+        if (!meeting) {
+            return res.status(404).json({ message: "Meeting not found or already ended" });
+        }
+
+        // Verify if user is host
+        if (meeting.host_id !== user.username) {
+            return res.status(httpStatus.FORBIDDEN).json({ message: "Only host can end the meeting" });
+        }
+
+        meeting.isEnded = true;
+        meeting.endTime = new Date();
+        await meeting.save();
+
+        res.status(httpStatus.OK).json({ message: "Meeting ended successfully" });
+
+    } catch (e) {
+        console.error("End meeting error:", e);
+        res.status(500).json({ message: `Error: ${e.message}` });
+    }
+}
+
+export { startMeeting, validateMeeting, checkMeetingStatus, endMeeting };

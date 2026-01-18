@@ -85,8 +85,47 @@ const getUserHistory = async (req, res) => {
             return res.status(httpStatus.UNAUTHORIZED).json({ message: "Invalid token" });
         }
 
-        const meetings = await Meeting.find({ user_id: user.username });
-        res.json(meetings);
+        const meetings = await Meeting.find({ user_id: user.username }).sort({ date: -1 });
+
+        // Map through meetings and fetch details from the 'Master' meeting (where host started it)
+        const enhancedMeetings = await Promise.all(meetings.map(async (historyEntry) => {
+            try {
+                // Determine if this history entry IS the master entry
+                if (historyEntry.host_id) {
+                    return {
+                        ...historyEntry.toObject(),
+                        hostName: historyEntry.host_id,
+                        isEnded: historyEntry.isEnded
+                    };
+                }
+
+                // If not, find the master meeting for this code
+                const masterMeeting = await Meeting.findOne({
+                    meetingCode: historyEntry.meetingCode,
+                    host_id: { $exists: true }
+                }).sort({ date: -1 }); // Get latest if duplicates exist
+
+                if (masterMeeting) {
+                    return {
+                        ...historyEntry.toObject(),
+                        hostName: masterMeeting.host_id,
+                        isEnded: masterMeeting.isEnded,
+                        startTime: masterMeeting.startTime,
+                        endTime: masterMeeting.endTime
+                    };
+                }
+
+                return {
+                    ...historyEntry.toObject(),
+                    hostName: "Unknown",
+                    isEnded: true // Assume ended if no master found? Or false? Default to unknown/inactive
+                };
+            } catch (err) {
+                return historyEntry.toObject();
+            }
+        }));
+
+        res.json(enhancedMeetings);
     } catch (e) {
         console.error("Get history error:", e);
         res.status(500).json({ message: `Something went wrong: ${e.message}` });

@@ -564,8 +564,16 @@ export default function VideoMeetComponent() {
         window.location.href = "/home";
     };
 
-    const handleEndMeetingForAll = () => {
+    const handleEndMeetingForAll = async () => {
         if (socketRef.current && isHost) {
+            try {
+                await axios.post(`${server}/api/v1/meetings/end`, {
+                    meetingCode: meetingCode,
+                    token: localStorage.getItem("token")
+                });
+            } catch (err) {
+                console.error("Failed to mark meeting as ended", err);
+            }
             socketRef.current.emit('end-meeting', window.location.href);
             handleEndCall();
         }

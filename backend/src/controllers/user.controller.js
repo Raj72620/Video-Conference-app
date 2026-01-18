@@ -100,8 +100,10 @@ const getUserHistory = async (req, res) => {
                 }
 
                 // If not, find the master meeting for this code
+                // Use regex for case-insensitive matching to ensure we find the master even if casing differs
+                const escapedCode = historyEntry.meetingCode.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                 const masterMeeting = await Meeting.findOne({
-                    meetingCode: historyEntry.meetingCode,
+                    meetingCode: { $regex: new RegExp(`^${escapedCode}$`, 'i') },
                     host_id: { $exists: true }
                 }).sort({ date: -1 }); // Get latest if duplicates exist
 
@@ -115,13 +117,20 @@ const getUserHistory = async (req, res) => {
                     };
                 }
 
+                // If master meeting not found, return safe default
                 return {
                     ...historyEntry.toObject(),
                     hostName: "Unknown",
-                    isEnded: true // Assume ended if no master found? Or false? Default to unknown/inactive
+                    isEnded: true // Default to ended if master not found to avoid "Active" ghosts
                 };
             } catch (err) {
-                return historyEntry.toObject();
+                console.error("Error processing history entry:", err);
+                // Return safe default object on error
+                return {
+                    ...historyEntry.toObject(),
+                    hostName: "Unknown",
+                    isEnded: true
+                };
             }
         }));
 

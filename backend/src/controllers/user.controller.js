@@ -101,10 +101,20 @@ const getUserHistory = async (req, res) => {
                     };
                 }
 
+                // Heuristic to fix potential dirty data (trailing slashes, whitespace)
+                // that might cause mismatch with the Master record.
+                let cleanCode = currentCode.trim();
+                if (cleanCode.endsWith('/')) {
+                    cleanCode = cleanCode.slice(0, -1);
+                }
+
                 // Find the master meeting (created by host)
-                // We use a case-insensitive exact match safely
+                // We use a case-insensitive match on both raw and cleaned code
                 const masterMeeting = await Meeting.findOne({
-                    meetingCode: { $regex: `^${currentCode}$`, $options: 'i' },
+                    $or: [
+                        { meetingCode: { $regex: `^${currentCode}$`, $options: 'i' } },
+                        { meetingCode: { $regex: `^${cleanCode}$`, $options: 'i' } }
+                    ],
                     host_id: { $exists: true }
                 }).sort({ date: -1 });
 
@@ -151,7 +161,7 @@ const addToHistory = async (req, res) => {
 
         const newMeeting = new Meeting({
             user_id: user.username,
-            meetingCode: meeting_code
+            meetingCode: meeting_code.toUpperCase().trim()
         });
 
         await newMeeting.save();

@@ -4,6 +4,8 @@ import { User } from "../models/user.model.js";
 
 const startMeeting = async (req, res) => {
     const { meetingCode, password, token } = req.body;
+    // Enforce consistency
+    const cleanMeetingCode = meetingCode ? meetingCode.toUpperCase().trim() : meetingCode;
 
     if (!meetingCode) {
         return res.status(400).json({ message: "Meeting code is required" });
@@ -16,13 +18,13 @@ const startMeeting = async (req, res) => {
             user = await User.findOne({ token: token });
         }
 
-        const existingMeeting = await Meeting.findOne({ meetingCode, isEnded: false });
+        const existingMeeting = await Meeting.findOne({ meetingCode: cleanMeetingCode, isEnded: false });
         if (existingMeeting) {
             return res.status(httpStatus.CONFLICT).json({ message: "Meeting code already active" });
         }
 
         const newMeeting = new Meeting({
-            meetingCode,
+            meetingCode: cleanMeetingCode,
             password,
             user_id: user ? user.username : null,
             host_id: user ? user.username : "guest", // or socket ID? better to rely on username/token
@@ -41,13 +43,14 @@ const startMeeting = async (req, res) => {
 
 const validateMeeting = async (req, res) => {
     const { meetingCode, password } = req.body;
+    const cleanMeetingCode = meetingCode ? meetingCode.toUpperCase().trim() : meetingCode;
 
     try {
-        const meeting = await Meeting.findOne({ meetingCode, isEnded: false });
+        const meeting = await Meeting.findOne({ meetingCode: cleanMeetingCode, isEnded: false });
 
         if (!meeting) {
             // Check if it was ended
-            const endedMeeting = await Meeting.findOne({ meetingCode, isEnded: true });
+            const endedMeeting = await Meeting.findOne({ meetingCode: cleanMeetingCode, isEnded: true });
             if (endedMeeting) {
                 return res.status(400).json({ message: "This session has expired" });
             }

@@ -236,7 +236,7 @@ function HomeComponent() {
       <nav className={styles.navbar}>
         <div className={styles.logo}>
           <MeetingIcon sx={{ color: '#fff', fontSize: 28 }} />
-          <span>Workplace</span>
+          <span>VidTalk</span>
         </div>
 
         <div className={styles.navLinks}>

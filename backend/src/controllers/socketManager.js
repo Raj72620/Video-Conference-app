@@ -153,7 +153,6 @@ export const connectToSocket = (server) => {
         });
 
         // Handle End Meeting
-        // Handle End Meeting
         socket.on("end-meeting", async (roomKey, meetingCodeInput, callback) => {
             try {
                 // Determine the DB meeting code (prefer explicit input, fallback to roomKey)

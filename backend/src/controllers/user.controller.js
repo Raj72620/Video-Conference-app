@@ -91,8 +91,7 @@ const getUserHistory = async (req, res) => {
         const enhancedMeetings = await Promise.all(meetings.map(async (historyEntry) => {
             try {
                 // Determine if this history entry IS the master entry
-                const currentCode = historyEntry.meetingCode;
-
+                // Determine if this history entry IS the master entry
                 if (historyEntry.host_id) {
                     return {
                         ...historyEntry.toObject(),
@@ -101,20 +100,28 @@ const getUserHistory = async (req, res) => {
                     };
                 }
 
-                // Heuristic to fix potential dirty data (trailing slashes, whitespace)
-                // that might cause mismatch with the Master record.
-                let cleanCode = currentCode.trim();
-                if (cleanCode.endsWith('/')) {
-                    cleanCode = cleanCode.slice(0, -1);
+                // Robust Code Extraction: 
+                // Handle cases where history saves full URLs (e.g. "https://site.com/code") 
+                // or dirty formats ("code/").
+                let derivedCode = historyEntry.meetingCode;
+
+                if (derivedCode && derivedCode.includes('/')) {
+                    const parts = derivedCode.split('/').filter(p => p.trim() !== "");
+                    if (parts.length > 0) {
+                        derivedCode = parts[parts.length - 1]; // Take last segment
+                    }
                 }
 
-                // Find the master meeting (created by host)
-                // We use a case-insensitive match on both raw and cleaned code
+                // Remove query parameters if any (e.g., 'code?t=123')
+                if (derivedCode && derivedCode.includes('?')) {
+                    derivedCode = derivedCode.split('?')[0];
+                }
+
+                const cleanCode = derivedCode ? derivedCode.trim() : "";
+
+                // Find the master meeting (created by host) using the cleaned code
                 const masterMeeting = await Meeting.findOne({
-                    $or: [
-                        { meetingCode: { $regex: `^${currentCode}$`, $options: 'i' } },
-                        { meetingCode: { $regex: `^${cleanCode}$`, $options: 'i' } }
-                    ],
+                    meetingCode: { $regex: `^${cleanCode}$`, $options: 'i' },
                     host_id: { $exists: true }
                 }).sort({ date: -1 });
 

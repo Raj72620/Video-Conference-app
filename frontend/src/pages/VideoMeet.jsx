@@ -596,21 +596,11 @@ export default function VideoMeetComponent() {
         const newState = !handRaised;
         setHandRaised(newState);
         socketRef.current.emit('toggle-hand', newState, meetingCode);
-        setRaisedHands(prev => ({ ...prev, [socketIdRef.current]: newState }));
     };
 
     const handleReaction = (emoji) => {
         setReactionAnchorEl(null);
         socketRef.current.emit('send-reaction', emoji, meetingCode);
-        const myId = socketIdRef.current;
-        setActiveReactions(prev => ({ ...prev, [myId]: { emoji, id: Date.now() } }));
-        setTimeout(() => {
-            setActiveReactions(prev => {
-                const newState = { ...prev };
-                if (newState[myId]) delete newState[myId];
-                return newState;
-            });
-        }, 3000);
     };
 
     const handleKickUser = (socketId) => {

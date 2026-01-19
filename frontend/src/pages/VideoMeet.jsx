@@ -741,24 +741,58 @@ export default function VideoMeetComponent() {
     return (
         <div className={styles.videoMeetContainer}>
             {askForUsername === true ? (
-                <Container maxWidth="sm" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', py: 4, background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' }}>
-                    <Paper elevation={24} sx={{ p: 4, width: '100%', maxWidth: '500px', borderRadius: 4, textAlign: 'center', backgroundColor: 'rgba(30, 41, 59, 0.9)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                <div className={styles.joinContainer}>
+                    <Paper elevation={24} className={styles.joinCard}>
                         <Box sx={{ mb: 4 }}>
-                            <Avatar sx={{ bgcolor: 'primary.main', width: 80, height: 80, margin: '0 auto 20px', background: 'linear-gradient(45deg, #3b82f6 30%, #8b5cf6 90%)' }}>
+                            <Avatar className={styles.joinAvatar}>
                                 <MeetingRoomIcon fontSize="large" />
                             </Avatar>
-                            <Typography variant="h4" component="h2" sx={{ fontWeight: 700, mb: 2, color: '#ffffff', background: 'linear-gradient(45deg, #3b82f6, #8b5cf6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Join Video Conference</Typography>
-                            <Typography variant="body1" sx={{ color: '#94a3b8' }}>Enter your name to join the meeting</Typography>
+                            <Typography variant="h4" component="h2" className={styles.joinTitle}>
+                                Join Video Conference
+                            </Typography>
+                            <Typography variant="body1" className={styles.joinText}>
+                                Enter your name to join the meeting
+                            </Typography>
                         </Box>
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mb: 4 }}>
-                            <TextField fullWidth label="Your Name" value={username} onChange={e => setUsername(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && connect()} InputProps={{ startAdornment: (<InputAdornment position="start"><PersonIcon sx={{ color: '#8b5cf6' }} /></InputAdornment>) }} sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2, backgroundColor: 'rgba(15, 23, 42, 0.8)', color: '#ffffff', '& fieldset': { borderColor: '#475569' }, '&:hover fieldset': { borderColor: '#8b5cf6' } }, '& .MuiInputLabel-root': { color: '#94a3b8' } }} />
-                            <Button fullWidth variant="contained" size="large" onClick={connect} disabled={!username.trim()} sx={{ py: 1.5, borderRadius: 2, textTransform: 'none', fontSize: '1rem', fontWeight: 600, background: 'linear-gradient(45deg, #3b82f6 30%, #8b5cf6 90%)', '&:hover': { background: 'linear-gradient(45deg, #2563eb 30%, #7c3aed 90%)', translateY: '-2px', boxShadow: '0 8px 25px rgba(59, 130, 246, 0.4)' } }} startIcon={<VideocamIcon />}>Join Meeting</Button>
+                        <Box className={styles.joinForm}>
+                            <TextField
+                                fullWidth
+                                label="Your Name"
+                                value={username}
+                                onChange={e => setUsername(e.target.value)}
+                                onKeyPress={(e) => e.key === 'Enter' && connect()}
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <PersonIcon sx={{ color: '#8b5cf6' }} />
+                                        </InputAdornment>
+                                    )
+                                }}
+                                className={styles.joinInput}
+                            />
+                            <Button
+                                fullWidth
+                                variant="contained"
+                                size="large"
+                                onClick={connect}
+                                disabled={!username.trim()}
+                                className={styles.joinButton}
+                                startIcon={<VideocamIcon />}
+                            >
+                                Join Meeting
+                            </Button>
                         </Box>
-                        <Box sx={{ mt: 4, borderRadius: 3, overflow: 'hidden', boxShadow: 3, border: '1px solid rgba(255, 255, 255, 0.1)', position: 'relative' }}>
-                            <video ref={localVideoref} autoPlay muted playsInline style={{ width: '100%', display: 'block', transform: 'scaleX(-1)' }} />
+                        <Box className={styles.previewVideoContainer}>
+                            <video
+                                ref={localVideoref}
+                                autoPlay
+                                muted
+                                playsInline
+                                className={styles.previewVideo}
+                            />
                         </Box>
                     </Paper>
-                </Container>
+                </div>
             ) : (
                 <div className={styles.meetVideoContainer}>
                     {/* Interactive & Collaborative Tools Component */}

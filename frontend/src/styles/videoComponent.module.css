@@ -1,11 +1,124 @@
 /* Global Reset & Base */
 .videoMeetContainer {
     width: 100%;
-    height: 100%;
+    height: 100vh;
+    /* Fixed height to viewport */
     overflow: hidden;
     background-color: #020617;
-    /* Slate 950 - Ultra Dark */
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* -------------------------------------------------------------------------- */
+/*                                JOIN MEETING SCREEN                         */
+/* -------------------------------------------------------------------------- */
+.joinContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding-top: 32px;
+    padding-bottom: 32px;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+}
+
+.joinCard {
+    padding: 32px;
+    width: 100%;
+    max-width: 500px;
+    border-radius: 16px !important;
+    text-align: center;
+    background-color: rgba(30, 41, 59, 0.9) !important;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+}
+
+.joinAvatar {
+    margin: 0 auto 20px auto;
+    background: linear-gradient(45deg, #3b82f6 30%, #8b5cf6 90%) !important;
+    width: 80px !important;
+    height: 80px !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.joinTitle {
+    font-weight: 700 !important;
+    margin-bottom: 16px !important;
+    color: #ffffff;
+    background: linear-gradient(45deg, #3b82f6, #8b5cf6);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.joinText {
+    color: #94a3b8;
+}
+
+.joinForm {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.joinInput .MuiOutlinedInput-root {
+    border-radius: 8px !important;
+    background-color: rgba(15, 23, 42, 0.8) !important;
+    color: #ffffff !important;
+}
+
+.joinInput .MuiOutlinedInput-root fieldset {
+    border-color: #475569 !important;
+}
+
+.joinInput .MuiOutlinedInput-root:hover fieldset {
+    border-color: #8b5cf6 !important;
+}
+
+.joinInput .MuiInputLabel-root {
+    color: #94a3b8 !important;
+}
+
+.joinInput .MuiInputLabel-root.Mui-focused {
+    color: #8b5cf6 !important;
+}
+
+.joinButton {
+    padding-top: 12px !important;
+    padding-bottom: 12px !important;
+    border-radius: 8px !important;
+    text-transform: none !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    background: linear-gradient(45deg, #3b82f6 30%, #8b5cf6 90%) !important;
+    transition: all 0.2s ease-in-out !important;
+}
+
+.joinButton:hover {
+    background: linear-gradient(45deg, #2563eb 30%, #7c3aed 90%) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4) !important;
+}
+
+.previewVideoContainer {
+    margin-top: 32px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+    background: #000;
+    aspect-ratio: 16/9;
+}
+
+.previewVideo {
+    width: 100%;
+    height: 100%;
+    display: block;
+    transform: scaleX(-1);
+    object-fit: cover;
 }
 
 .meetVideoContainer {

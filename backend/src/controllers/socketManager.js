@@ -94,9 +94,7 @@ export const connectToSocket = (server) => {
         socket.on("toggle-hand", (isRaised, meetingCode) => {
             if (connections[meetingCode]) {
                 connections[meetingCode].forEach(socketId => {
-                    if (socketId !== socket.id) {
-                        io.to(socketId).emit("hand-update", socket.id, isRaised);
-                    }
+                    io.to(socketId).emit("hand-update", socket.id, isRaised);
                 });
             }
         });

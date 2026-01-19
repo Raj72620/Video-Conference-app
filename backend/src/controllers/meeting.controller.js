@@ -12,13 +12,13 @@ const startMeeting = async (req, res) => {
     }
 
     try {
-        // Find user if token provided
-        let user;
-        if (token) {
-            user = await User.findOne({ token: token });
-            if (!user) {
-                return res.status(httpStatus.UNAUTHORIZED).json({ message: "Invalid session. Please login again." });
-            }
+        if (!token) {
+            return res.status(httpStatus.UNAUTHORIZED).json({ message: "User token is required to start a meeting" });
+        }
+
+        const user = await User.findOne({ token: token });
+        if (!user) {
+            return res.status(httpStatus.UNAUTHORIZED).json({ message: "Invalid session. Please login again." });
         }
 
         const existingMeeting = await Meeting.findOne({ meetingCode: cleanMeetingCode, isEnded: false });
@@ -29,8 +29,8 @@ const startMeeting = async (req, res) => {
         const newMeeting = new Meeting({
             meetingCode: cleanMeetingCode,
             password,
-            user_id: user ? user.username : null,
-            host_id: user ? user.username : "guest", // or socket ID? better to rely on username/token
+            user_id: user.username,
+            host_id: user.username,
             startTime: new Date()
         });
 

@@ -107,6 +107,10 @@ function HomeComponent() {
       navigate(`/${newMeetingCode}`);
     } catch (err) {
       console.error("Create meeting error:", err);
+      if (err.response?.status === 401) {
+        logout();
+        return;
+      }
       setError(err.response?.data?.message || "Failed to create meeting");
     } finally {
       setLoading(false);

@@ -16,6 +16,9 @@ const startMeeting = async (req, res) => {
         let user;
         if (token) {
             user = await User.findOne({ token: token });
+            if (!user) {
+                return res.status(httpStatus.UNAUTHORIZED).json({ message: "Invalid session. Please login again." });
+            }
         }
 
         const existingMeeting = await Meeting.findOne({ meetingCode: cleanMeetingCode, isEnded: false });

@@ -84,6 +84,23 @@
     position: relative;
 }
 
+.calendarPositioner {
+    position: absolute;
+    top: 100px;
+    left: 40px;
+    z-index: 20;
+}
+
+@media (max-width: 1200px) {
+    .calendarPositioner {
+        position: static;
+        margin-bottom: 40px;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
+}
+
 /* Clock Section */
 .clockSection {
     text-align: center;
@@ -115,6 +132,56 @@
     border-radius: 100px;
     display: inline-block;
     border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.startingSoonContainer {
+    margin-top: 30px;
+    background: rgba(139, 92, 246, 0.1);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    border-radius: 20px;
+    padding: 20px;
+    width: 100%;
+    max-width: 350px;
+    text-align: center;
+    backdrop-filter: blur(20px);
+    animation: pulseGlow 2s infinite;
+}
+
+.startingHeading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: #8b5cf6;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+}
+
+.startingDetails {
+    margin-bottom: 10px;
+}
+
+.countdown {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+    margin-top: 4px;
+}
+
+@keyframes pulseGlow {
+    0% {
+        box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.2);
+    }
+
+    70% {
+        box-shadow: 0 0 0 15px rgba(139, 92, 246, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(139, 92, 246, 0);
+    }
 }
 
 /* Action Cards Wrapper */

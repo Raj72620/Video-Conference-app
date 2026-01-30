@@ -1,0 +1,55 @@
+/* ScheduleMeeting.module.css */
+.meetingCard {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    transition: all 0.3s ease;
+}
+
+.meetingCard:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.startingSoonCard {
+    background: rgba(237, 108, 2, 0.05);
+    border: 1px solid rgba(237, 108, 2, 0.3);
+    border-radius: 16px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(237, 108, 2, 0.2);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(237, 108, 2, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(237, 108, 2, 0);
+    }
+}
+
+/* Animations for starting soon */
+.countdownTimer {
+    font-family: 'JetBrains Mono', monospace;
+    color: #ed6c02;
+    font-weight: 800;
+}
+
+/* Scrollbar for Dialog */
+.dialogScroll::-webkit-scrollbar {
+    width: 6px;
+}
+
+.dialogScroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.dialogScroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}

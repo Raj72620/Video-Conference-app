@@ -1,5 +1,6 @@
 import { Server } from "socket.io"
 import { Meeting } from "../models/meeting.model.js"
+import { ScheduledMeeting } from "../models/scheduledMeeting.model.js"
 
 let connections = {}
 let messages = {}
@@ -153,8 +154,7 @@ export const connectToSocket = (server) => {
         // Handle End Meeting
         socket.on("end-meeting", async (roomKey, meetingCodeInput, callback) => {
             try {
-                // Determine the DB meeting code (prefer explicit input, fallback to roomKey)
-                const dbMeetingCode = meetingCodeInput || roomKey;
+                const dbMeetingCode = (meetingCodeInput || roomKey).toUpperCase().trim();
 
                 console.log(`Ending meeting: Room=${roomKey}, Code=${dbMeetingCode}`);
 
@@ -163,22 +163,24 @@ export const connectToSocket = (server) => {
                     connections[roomKey].forEach(socketId => {
                         io.to(socketId).emit("meeting-ended");
                     });
-
-                    // Clear connections specifically for this room
                     delete connections[roomKey];
                     delete messages[roomKey];
                     if (bannedUsers[roomKey]) delete bannedUsers[roomKey];
                 }
 
-                // Update DB
+                // Update standard history meeting
                 await Meeting.findOneAndUpdate(
                     { meetingCode: dbMeetingCode },
                     { isEnded: true, endTime: new Date() }
                 );
 
-                // Acknowledge completion if callback provided
-                if (typeof callback === 'function') callback();
+                // ALSO update scheduled meeting if it exists
+                await ScheduledMeeting.findOneAndUpdate(
+                    { meetingCode: dbMeetingCode },
+                    { status: 'Ended' }
+                );
 
+                if (typeof callback === 'function') callback();
             } catch (e) {
                 console.error("Error ending meeting:", e);
                 if (typeof callback === 'function') callback({ error: e.message });

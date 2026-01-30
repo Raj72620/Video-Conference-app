@@ -28,7 +28,8 @@ const login = async (req, res) => {
             return res.status(httpStatus.OK).json({
                 token: token,
                 user: {
-                    name: user.name || user.username || "User", // Fallback if name is missing
+                    id: user._id,
+                    name: user.name || user.username || "User",
                     username: user.username,
                     email: user.username
                 }
@@ -65,6 +66,7 @@ const register = async (req, res) => {
         res.status(httpStatus.CREATED).json({
             message: "User Registered Successfully",
             user: {
+                id: newUser._id,
                 name: name,
                 username: username,
                 email: username
@@ -100,9 +102,6 @@ const getUserHistory = async (req, res) => {
                     };
                 }
 
-                // Robust Code Extraction: 
-                // Handle cases where history saves full URLs (e.g. "https://site.com/code") 
-                // or dirty formats ("code/").
                 let derivedCode = historyEntry.meetingCode;
 
                 if (derivedCode && derivedCode.includes('/')) {

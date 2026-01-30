@@ -1,6 +1,6 @@
 // pages/home.jsx
 
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect, useCallback } from 'react';
 import withAuth from '../utils/withAuth';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -21,7 +21,8 @@ import {
   Drawer,
   Chip,
   Card,
-  Divider
+  Divider,
+  Badge
 } from '@mui/material';
 import {
   Videocam as MeetingIcon,
@@ -31,19 +32,21 @@ import {
   Settings as SettingsIcon,
   Logout as LogoutIcon,
   Close as CloseIcon,
-  Lock as LockIcon,
-  History as HistoryIcon,
-  Delete as DeleteIcon,
   Home as HomeIcon,
+  History as HistoryIcon,
   Help as HelpIcon,
-  PlayArrow as PlayArrowIcon,
+  Delete as DeleteIcon,
   ContentCopy as ContentCopyIcon,
-  Download as DownloadIcon
+  Download as DownloadIcon,
+  Notifications as NotificationsIcon,
+  Timer
 } from '@mui/icons-material';
 
 import { AuthContext } from '../contexts/AuthContext';
 import styles from '../styles/home.module.css';
 import server from '../environment';
+import { CalendarWidget, FullYearCalendar } from '../components/Calendar/Calendar';
+import { CalendarMonth as CalendarMonthIcon } from '@mui/icons-material';
 
 function HomeComponent() {
   const navigate = useNavigate();
@@ -63,6 +66,7 @@ function HomeComponent() {
   const [history, setHistory] = useState([]);
   const [recordings, setRecordings] = useState([]);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   // User Menu
   const [anchorEl, setAnchorEl] = useState(null);
@@ -70,18 +74,81 @@ function HomeComponent() {
   // Feedback
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [scheduledMeetings, setScheduledMeetings] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [startingSoonMeeting, setStartingSoonMeeting] = useState(null);
+  const [notificationAnchor, setNotificationAnchor] = useState(null);
+  const [successMsg, setSuccessMsg] = useState("");
 
-  // Initialize random code for new meeting
+  const addNotification = useCallback((msg, meeting) => {
+    const newNote = { id: Date.now(), msg, meeting, time: new Date() };
+    setNotifications(prev => [newNote, ...prev].slice(0, 10));
+    setSuccessMsg(msg);
+  }, []);
+
+  const checkMeetingLifecycle = useCallback((now) => {
+    const notifiedKeys = JSON.parse(localStorage.getItem('notifiedMeetings') || '{}');
+    let startingSoon = null;
+
+    scheduledMeetings.forEach(m => {
+      if (m.status !== 'Scheduled') return;
+
+      const meetingTime = new Date(`${m.date.split('T')[0]}T${m.startTime}`);
+      const diffSeconds = (meetingTime - now) / 1000;
+
+      // 10 minutes reminder
+      if (diffSeconds <= 600 && diffSeconds > 590 && !notifiedKeys[`${m._id}_10`]) {
+        addNotification(`Meeting "${m.meetingCode}" starts in 10 minutes!`, m);
+        notifiedKeys[`${m._id}_10`] = true;
+      }
+
+      // 2 minutes reminder & Starting Soon section
+      if (diffSeconds <= 120 && diffSeconds > 0) {
+        startingSoon = m;
+        if (diffSeconds > 110 && !notifiedKeys[`${m._id}_2`]) {
+          addNotification(`Meeting "${m.meetingCode}" is starting soon!`, m);
+          notifiedKeys[`${m._id}_2`] = true;
+        }
+      }
+    });
+
+    setStartingSoonMeeting(startingSoon);
+    localStorage.setItem('notifiedMeetings', JSON.stringify(notifiedKeys));
+  }, [scheduledMeetings, addNotification]);
+
+  const fetchScheduledMeetings = useCallback(async () => {
+    if (!userData?.id) return;
+    try {
+      const res = await axios.get(`${server}/api/v1/scheduled/user`, {
+        params: { userId: userData.id }
+      });
+      setScheduledMeetings(res.data);
+    } catch (e) {
+      console.error("Error fetching scheduled", e);
+    }
+  }, [userData?.id]);
+
+  // 1. Generate random code once on mount
   useEffect(() => {
     const randomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
     setNewMeetingCode(randomCode);
+  }, []);
 
+  // 2. Fetch scheduled meetings once or when user changes
+  useEffect(() => {
+    fetchScheduledMeetings();
+  }, [fetchScheduledMeetings]);
+
+  // 3. Keep clock updated and check meeting lifecycle
+  useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentTime(new Date());
+      const now = new Date();
+      setCurrentTime(now);
+      checkMeetingLifecycle(now);
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [checkMeetingLifecycle]);
 
   const handleCreateMeeting = async () => {
     if (!newMeetingCode.trim()) {
@@ -129,7 +196,7 @@ function HomeComponent() {
     setLoading(true);
     try {
       // Validate Meeting
-      const response = await axios.post(`${server}/api/v1/meetings/validate`, {
+      await axios.post(`${server}/api/v1/meetings/validate`, {
         meetingCode: cleanCode
       });
 
@@ -168,7 +235,7 @@ function HomeComponent() {
     }
   };
 
-  const fetchRecordings = async () => {
+  const fetchRecordings = useCallback(async () => {
     try {
       if (!userData?.username) return;
       const response = await axios.get(`${server}/api/v1/recordings/user`, {
@@ -178,7 +245,7 @@ function HomeComponent() {
     } catch (err) {
       console.error("Failed to fetch recordings", err);
     }
-  };
+  }, [userData?.username]);
 
   const handleDeleteRecording = async (id) => {
     if (!window.confirm("Are you sure you want to delete this recording?")) return;
@@ -195,7 +262,7 @@ function HomeComponent() {
     if (profileOpen) {
       fetchRecordings();
     }
-  }, [profileOpen]);
+  }, [profileOpen, fetchRecordings]);
 
   const handleHistoryOpen = async () => {
     setHistoryOpen(true);
@@ -250,12 +317,21 @@ function HomeComponent() {
           <div className={styles.navItem} onClick={handleHistoryOpen}>
             <HistoryIcon fontSize="small" /> <span>History</span>
           </div>
+          <div className={styles.navItem} onClick={() => setCalendarOpen(true)}>
+            <CalendarMonthIcon fontSize="small" /> <span>Calendar</span>
+          </div>
           <div className={styles.navItem} onClick={() => alert("Help Center coming soon")}>
             <HelpIcon fontSize="small" /> <span>Help</span>
           </div>
         </div>
 
         <div className={styles.authSection}>
+          <IconButton sx={{ color: '#fff', mr: 1 }} onClick={(e) => setNotificationAnchor(e.currentTarget)}>
+            <Badge badgeContent={notifications.length} color="error">
+              <NotificationsIcon />
+            </Badge>
+          </IconButton>
+
           <div className={styles.profile} onClick={(e) => setAnchorEl(e.currentTarget)}>
             <Avatar sx={{ width: 32, height: 32, bgcolor: '#ff6b00', fontSize: 14 }}>
               {displayUser.name?.charAt(0).toUpperCase()}
@@ -268,6 +344,14 @@ function HomeComponent() {
       {/* 2. Main Dashboard Content */}
       <div className={styles.mainContent}>
 
+        {/* Calendar Widget (Top Left) */}
+        <div className={styles.calendarPositioner}>
+          <CalendarWidget
+            onClick={() => setCalendarOpen(true)}
+            scheduledMeetings={scheduledMeetings}
+          />
+        </div>
+
         {/* Clock Section (Top Center) */}
         <div className={styles.clockSection}>
           <div className={styles.timeDisplay}>
@@ -276,6 +360,46 @@ function HomeComponent() {
           <div className={styles.dateDisplay}>
             {formatFullDate(currentTime)}
           </div>
+
+          {/* New Starting Soon Section */}
+          {startingSoonMeeting && (
+            <div className={styles.startingSoonContainer}>
+              <div className={styles.startingHeading}>
+                <Timer sx={{ fontSize: 18, mr: 1 }} /> STARTING SOON
+              </div>
+              <div className={styles.startingDetails}>
+                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>{startingSoonMeeting.meetingCode}</Typography>
+                <div className={styles.countdown}>
+                  Starts in: {(() => {
+                    const meetingTime = new Date(`${startingSoonMeeting.date.split('T')[0]}T${startingSoonMeeting.startTime}`);
+                    const diff = Math.max(0, Math.floor((meetingTime - currentTime) / 1000));
+                    const m = Math.floor(diff / 60);
+                    const s = diff % 60;
+                    return `${m}:${s.toString().padStart(2, '0')}`;
+                  })()}
+                </div>
+              </div>
+              <Button
+                variant="contained"
+                fullWidth
+                disabled={(() => {
+                  const meetingTime = new Date(`${startingSoonMeeting.date.split('T')[0]}T${startingSoonMeeting.startTime}`);
+                  return currentTime < meetingTime;
+                })()}
+                onClick={async () => {
+                  try {
+                    await axios.patch(`${server}/api/v1/scheduled/start/${startingSoonMeeting._id}`);
+                    navigate(`/${startingSoonMeeting.meetingCode}`);
+                  } catch (e) {
+                    console.error(e);
+                  }
+                }}
+                sx={{ mt: 2, borderRadius: '12px', bgcolor: '#8b5cf6' }}
+              >
+                Start Meeting
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Action Cards (Below Clock) */}
@@ -420,7 +544,7 @@ function HomeComponent() {
                 const isActive = !meeting.isEnded;
                 return (
                   <Card
-                    key={index}
+                    key={meeting._id || index}
                     sx={{
                       backgroundColor: '#1e1e1e',
                       color: '#fff',
@@ -645,6 +769,31 @@ function HomeComponent() {
       <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError("")} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
         <Alert severity="error" onClose={() => setError("")} sx={{ width: '100%' }}>{error}</Alert>
       </Snackbar>
+
+      <Snackbar open={!!successMsg} autoHideDuration={6000} onClose={() => setSuccessMsg("")} anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
+        <Alert severity="info" variant="filled" onClose={() => setSuccessMsg("")} sx={{ width: '100%', bgcolor: '#8b5cf6' }}>{successMsg}</Alert>
+      </Snackbar>
+
+      <Menu
+        anchorEl={notificationAnchor}
+        open={Boolean(notificationAnchor)}
+        onClose={() => setNotificationAnchor(null)}
+        PaperProps={{ sx: { bgcolor: '#1a1a1a', color: '#fff', border: '1px solid #333', width: 300 } }}
+      >
+        <Typography variant="subtitle2" sx={{ p: 2, borderBottom: '1px solid #333' }}>Notifications</Typography>
+        {notifications.length === 0 ? (
+          <MenuItem sx={{ p: 2, color: '#666' }}>No new notifications</MenuItem>
+        ) : (
+          notifications.map(n => (
+            <MenuItem key={n.id} sx={{ flexDirection: 'column', alignItems: 'flex-start', borderBottom: '1px solid #222', p: 2 }}>
+              <Typography variant="body2" sx={{ fontWeight: '500' }}>{n.msg}</Typography>
+              <Typography variant="caption" sx={{ color: '#666' }}>{n.time.toLocaleTimeString()}</Typography>
+            </MenuItem>
+          ))
+        )}
+      </Menu>
+
+      <FullYearCalendar open={calendarOpen} onClose={() => { setCalendarOpen(false); fetchScheduledMeetings(); }} />
     </div>
   );
 }

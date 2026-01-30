@@ -13,7 +13,6 @@ const uploadDir = path.join(__dirname, '../../public/uploads');
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
-
 // Configure Storage
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {

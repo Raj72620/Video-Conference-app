@@ -3,17 +3,13 @@ import { useParams } from 'react-router-dom';
 import io from "socket.io-client";
 import axios from 'axios';
 import {
-    Badge,
-    IconButton,
     TextField,
     Button,
-    Container,
     Paper,
     Box,
     Typography,
     Avatar,
     InputAdornment,
-    Tooltip,
 } from '@mui/material';
 import {
     Videocam as VideocamIcon,
@@ -27,9 +23,9 @@ import server from '../environment';
 import { AuthContext } from '../contexts/AuthContext.jsx';
 
 // Import newly created sub-components
-import VideoMeet_Sidebar from './VideoMeet_Sidebar';
-import VideoMeet_Recording from './VideoMeet_Recording';
-import VideoMeet_ProfessionalUI from './VideoMeet_ProfessionalUI';
+import Sidebar from './VideoMeet_Sidebar';
+import Recording from './VideoMeet_Recording';
+import ProfessionalUI from './VideoMeet_ProfessionalUI';
 
 const server_url = server;
 var connections = {};
@@ -132,7 +128,7 @@ export default function VideoMeetComponent() {
         if (userData?.name && askForUsername === false) {
             getMedia();
         }
-    }, [askForUsername, userData, meetingCodeParam]);
+    }, [askForUsername, userData, meetingCodeParam, getMedia]);
 
     // Initialize self-view position on window resize
     useEffect(() => {
@@ -209,7 +205,7 @@ export default function VideoMeetComponent() {
             localVideoref.current.srcObject = window.localStream;
             getUserMedia();
         });
-    }, []);
+    }, [black, silence, getUserMedia]);
 
     const getDisplayMedia = useCallback(() => {
         if (screen) {
@@ -315,7 +311,7 @@ export default function VideoMeetComponent() {
                 });
             }
         });
-    }, []);
+    }, [black, silence]);
 
     const getUserMedia = useCallback(() => {
         if ((video && videoAvailable) || (audio && audioAvailable)) {
@@ -499,7 +495,7 @@ export default function VideoMeetComponent() {
             alert("The host has ended the meeting.");
             window.location.href = "/home";
         });
-    }, [username, videos, meetingCode]);
+    }, [username, meetingCode, gotMessageFromServer, addMessage, isHost, handleEndCall]);
 
     const gotMessageFromServer = useCallback((fromId, message) => {
         var signal = JSON.parse(message);
@@ -535,21 +531,21 @@ export default function VideoMeetComponent() {
         }
     }, [showChat]);
 
-    const silence = () => {
+    const silence = useCallback(() => {
         let ctx = new AudioContext();
         let oscillator = ctx.createOscillator();
         let dst = oscillator.connect(ctx.createMediaStreamDestination());
         oscillator.start();
         ctx.resume();
         return Object.assign(dst.stream.getAudioTracks()[0], { enabled: false });
-    };
+    }, []);
 
-    const black = ({ width = 640, height = 480 } = {}) => {
+    const black = useCallback(({ width = 640, height = 480 } = {}) => {
         let canvas = Object.assign(document.createElement("canvas"), { width, height });
         canvas.getContext('2d').fillRect(0, 0, width, height);
         let stream = canvas.captureStream();
         return Object.assign(stream.getVideoTracks()[0], { enabled: false });
-    };
+    }, []);
 
     const handleVideo = () => setVideo(!video);
     const handleAudio = () => setAudio(!audio);
@@ -786,7 +782,7 @@ export default function VideoMeetComponent() {
             ) : (
                 <div className={styles.meetVideoContainer}>
                     {/* Interactive & Collaborative Tools Component */}
-                    <VideoMeet_Sidebar
+                    <Sidebar
                         showChat={showChat}
                         setShowChat={setShowChat}
                         activeTab={activeTab}
@@ -810,7 +806,7 @@ export default function VideoMeetComponent() {
                     />
 
                     {/* Professional UI/UX Features Component */}
-                    <VideoMeet_ProfessionalUI
+                    <ProfessionalUI
                         videos={videos}
                         page={page}
                         setPage={setPage}
@@ -852,7 +848,7 @@ export default function VideoMeetComponent() {
                     />
 
                     {/* Integrated Recording Manager */}
-                    <VideoMeet_Recording
+                    <Recording
                         uploading={uploading}
                         uploadProgress={uploadProgress}
                     />

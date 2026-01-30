@@ -40,6 +40,7 @@ app.use((req, res, next) => {
 import path from "path";
 import { fileURLToPath } from 'url';
 import recordingRoutes from "./routes/recording.routes.js";
+import scheduledMeetingRoutes from "./routes/scheduledMeeting.routes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -52,6 +53,7 @@ app.get("/health", (req, res) => {
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/meetings", meetingRoutes);
 app.use("/api/v1/recordings", recordingRoutes);
+app.use("/api/v1/scheduled", scheduledMeetingRoutes);
 
 // Serve static files (uploads)
 // 'backend/public/uploads' mapped to '/uploads'
